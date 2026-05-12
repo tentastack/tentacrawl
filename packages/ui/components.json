@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "../../apps/web/src/app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@tentacrawl/ui",
+    "utils": "@tentacrawl/ui/lib/utils",
+    "ui": "@tentacrawl/ui/primitives",
+    "lib": "@tentacrawl/ui/lib",
+    "hooks": "@tentacrawl/ui/hooks"
+  }
+}

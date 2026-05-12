@@ -1,0 +1,76 @@
+{
+  "name": "@tentacrawl/crawler",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "data/entities": ["dist/data/entities.d.ts"],
+      "data/schemas": ["dist/data/schemas.d.ts"],
+      "frontend": ["src/frontend/index.ts"]
+    }
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./data/entities": "./dist/data/entities.js",
+    "./data/schemas": "./dist/data/schemas.js",
+    "./frontend": "./src/frontend/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "lint": "eslint src/",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "@tentacrawl/core": "workspace:*",
+    "@tentacrawl/dsl": "workspace:*",
+    "@tentacrawl/browser": "workspace:*",
+    "zod": "^3.24.0"
+  },
+  "peerDependencies": {
+    "@mikro-orm/core": "^6.5.0",
+    "@mikro-orm/mongodb": "^6.5.0",
+    "@mikro-orm/nestjs": "^6.0.0",
+    "@nestjs/bullmq": "^11.0.0",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@tanstack/react-query": "^5.0.0",
+    "@tanstack/react-table": "^8.0.0",
+    "@tentacrawl/ui": "workspace:*",
+    "bullmq": "^5.0.0",
+    "lucide-react": "^0.500.0",
+    "next": "^15.0.0",
+    "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    },
+    "@tanstack/react-query": {
+      "optional": true
+    },
+    "@tanstack/react-table": {
+      "optional": true
+    },
+    "lucide-react": {
+      "optional": true
+    },
+    "@tentacrawl/ui": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.7.0"
+  }
+}

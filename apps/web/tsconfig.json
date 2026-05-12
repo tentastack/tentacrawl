@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["DOM", "DOM.Iterable", "ES2023"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@tentacrawl/admin": ["../../packages/admin/src"],
+      "@tentacrawl/admin/*": ["../../packages/admin/src/*"],
+      "@tentacrawl/crawler": ["../../packages/crawler/src"],
+      "@tentacrawl/crawler/*": ["../../packages/crawler/src/*"],
+      "@tentacrawl/ui": ["../../packages/ui/src"],
+      "@tentacrawl/ui/*": ["../../packages/ui/src/*"],
+      "@tentacrawl/core": ["../../packages/core/src"],
+      "@tentacrawl/notification": ["../../packages/notification/src"],
+      "@tentacrawl/notification/*": ["../../packages/notification/src/*"],
+      "@tentacrawl/scraper": ["../../packages/scraper/src"],
+      "@tentacrawl/scraper/*": ["../../packages/scraper/src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

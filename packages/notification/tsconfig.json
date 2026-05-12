@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@tentacrawl/core/notification": ["../core/dist/notification/index.d.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/frontend"]
+}

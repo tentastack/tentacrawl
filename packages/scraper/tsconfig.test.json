@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@tentacrawl/core/activity": ["../core/dist/activity/index.d.ts"],
+      "@tentacrawl/core/notification": ["../core/dist/notification/index.d.ts"]
+    }
+  }
+}

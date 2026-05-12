@@ -1,0 +1,36 @@
+{
+  "name": "@tentacrawl/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "clean": "rm -rf .next out *.tsbuildinfo",
+    "start": "next start --port 3001",
+    "lint": "eslint src next.config.ts"
+  },
+  "dependencies": {
+    "@tentacrawl/admin": "workspace:*",
+    "@tentacrawl/crawler": "workspace:*",
+    "@tentacrawl/core": "workspace:*",
+    "@tentacrawl/notification": "workspace:*",
+    "@tentacrawl/ui": "workspace:*",
+    "@tentacrawl/scraper": "workspace:*",
+    "@tanstack/react-query": "^5.62.0",
+    "@tanstack/react-table": "^8.20.0",
+    "lucide-react": "^0.468.0",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sonner": "^1.7.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "@tentacrawl/core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "activity": ["dist/activity/index.d.ts"],
+      "entity": ["dist/entity/index.d.ts"],
+      "notification": ["dist/notification/index.d.ts"],
+      "schema": ["dist/schema/index.d.ts"],
+      "url": ["dist/url.d.ts"],
+      "module-info": ["src/module-info.ts"]
+    }
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./activity": "./dist/activity/index.js",
+    "./entity": "./dist/entity/index.js",
+    "./notification": "./dist/notification/index.js",
+    "./schema": "./dist/schema/index.js",
+    "./url": "./dist/url.js",
+    "./module-info": "./src/module-info.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "lint": "eslint src/",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@mikro-orm/core": "^6.5.0",
+    "@mikro-orm/mongodb": "^6.5.0",
+    "@nestjs/common": "^11.0.0",
+    "pino": "^9.6.0",
+    "tldts": "^7.0.11",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.7.0"
+  }
+}

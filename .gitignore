@@ -1,0 +1,68 @@
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# Editors
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/*
+*.code-workspace
+
+# Node, package managers, and build output
+node_modules/
+dist/
+.next/
+coverage/
+*.tsbuildinfo
+.pnpm-store/
+.turbo/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+secrets.yaml
+*-secret.yaml
+local-values.yaml
+.github/
+
+# Logs and runtime output
+logs/
+*.log
+.pnpm-debug.log*
+.artifacts/
+.screenshots/
+packages/browser/sandbox/.screenshots/
+.gluetun/
+
+# Playwright output
+.github/e2e/test-results/
+test-results/
+playwright-report/
+
+# Local data and temp files
+books/
+page-sources/
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Local virtual environments
+.venv/
+
+# Package manager drift
+package-lock.json
+yarn.lock
+

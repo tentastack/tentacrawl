@@ -1,0 +1,33 @@
+name: example-page-scraper
+steps:
+  - action: goto
+    value: "https://quotes.toscrape.com/"
+
+  - action: waitFor
+    selector: ".quote"
+
+  - action: extractText
+    selector: ".quote:first-child .text"
+    outputKey: "first_quote_text"
+
+  - action: extractText
+    selector: ".quote:first-child .author"
+    outputKey: "first_quote_author"
+
+  - action: extractAttr
+    selector: ".quote:first-child span a"
+    attr: "href"
+    outputKey: "first_author_link"
+
+  - action: click
+    selector: ".pager .next a"
+
+  - action: waitFor
+    selector: ".quote"
+
+  - action: extractHtml
+    selector: ".quote:first-child"
+    outputKey: "next_page_first_quote"
+
+  - action: screenshot
+    outputKey: "listing_screenshot"

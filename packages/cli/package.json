@@ -1,0 +1,25 @@
+{
+  "name": "@tentacrawl/cli",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "tentacrawl-generate": "dist/generate.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "generate": "tsx src/generate.ts",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@tentacrawl/core": "workspace:*",
+    "glob": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0"
+  }
+}
