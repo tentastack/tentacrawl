@@ -3,11 +3,13 @@ import type { ArtefactFormat, ArtefactResult } from '@tentacrawl/core';
 import { htmlToMarkdown } from './markdown';
 import { extractMetadata } from './metadata';
 import { discoverLinks } from './link-discovery';
+import type { ChallengerRunSession } from './port/challenger-dispatcher';
 
 export async function collectArtefacts(
   page: Page,
   artefactFormats: ArtefactFormat[],
   baseUrl: string,
+  session?: ChallengerRunSession,
 ): Promise<ArtefactResult> {
   const artefacts: ArtefactResult = {};
   const requested = new Set(artefactFormats);
@@ -38,7 +40,7 @@ export async function collectArtefacts(
 
   if (requested.has('links')) {
     parallel.push(
-      discoverLinks(page, baseUrl).then((l) => {
+      discoverLinks(page, baseUrl, session).then((l) => {
         artefacts.links = l;
       }),
     );
@@ -51,6 +53,16 @@ export async function collectArtefacts(
   if (requested.has('screenshot')) {
     const buffer = await page.screenshot({ fullPage: true });
     artefacts.screenshot = buffer.toString('base64');
+  }
+
+  if (session?.hasHandlers('artefact-collected')) {
+    for (const [artifactKey, artifactValue] of Object.entries(artefacts)) {
+      await session.dispatch('artefact-collected', {
+        raw: { page },
+        artifactKey,
+        artifactValue,
+      });
+    }
   }
 
   return artefacts;

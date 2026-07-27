@@ -1,17 +1,25 @@
 import * as yaml from 'js-yaml';
-import { dslDocumentSchema, type DslDocument, type DslStep } from './dsl.schema';
+import {
+  DSL_ACTIONS,
+  buildDocumentSchema,
+  type DslAction,
+  type DslActionContribution,
+  type DslDocument,
+  type ExtendedDslStep,
+} from './dsl.schema';
 import { renderTemplate } from './template';
 
 
 export interface CompiledStep {
   index: number;
-  action: DslStep['action'];
+  action: string;
   selector?: string;
   value?: string;
   outputKey?: string;
   attr?: string;
   condition?: string;
   timeoutMs?: number;
+  fields?: Record<string, unknown>;
 }
 
 export interface CompileResult {
@@ -21,11 +29,15 @@ export interface CompileResult {
 
 export interface CompileOptions {
   params?: Record<string, unknown>;
+  actions?: ReadonlyArray<DslActionContribution>;
 }
 
-export function parseDsl(yamlText: string): DslDocument {
+export function parseDsl(
+  yamlText: string,
+  actions: ReadonlyArray<DslActionContribution> = [],
+): DslDocument {
   const raw = yaml.load(yamlText);
-  return dslDocumentSchema.parse(raw);
+  return buildDocumentSchema(actions).parse(raw);
 }
 
 export function compileDsl(
@@ -33,8 +45,18 @@ export function compileDsl(
   options: CompileOptions = {},
 ): CompileResult {
   const params = options.params ?? {};
+  const actions = new Map(
+    (options.actions ?? []).map((a) => [a.action, a]),
+  );
 
-  const steps: CompiledStep[] = doc.steps.map((step, index) => {
+  const steps: CompiledStep[] = doc.steps.map((rawStep, index) => {
+    const contribution = isBaseAction(rawStep.action)
+      ? undefined
+      : actions.get(rawStep.action);
+    const step = contribution?.compile
+      ? (contribution.compile(rawStep) as ExtendedDslStep)
+      : rawStep;
+
     const compiled: CompiledStep = {
       index,
       action: step.action,
@@ -58,6 +80,9 @@ export function compileDsl(
     if (step.timeoutMs !== undefined) {
       compiled.timeoutMs = step.timeoutMs;
     }
+    if (contribution) {
+      compiled.fields = { ...step };
+    }
 
     return compiled;
   });
@@ -65,10 +90,14 @@ export function compileDsl(
   return { name: doc.name, steps };
 }
 
+function isBaseAction(action: string): boolean {
+  return DSL_ACTIONS.includes(action as DslAction);
+}
+
 export function parseAndCompile(
   yamlText: string,
   options: CompileOptions = {},
 ): CompileResult {
-  const doc = parseDsl(yamlText);
+  const doc = parseDsl(yamlText, options.actions);
   return compileDsl(doc, options);
 }

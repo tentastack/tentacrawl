@@ -8,10 +8,15 @@ export interface RouteEntry {
 
 export const moduleRoutes: RouteEntry[] = [
   { path: 'dashboard', module: 'admin', title: 'Dashboard' },
-  { path: 'scrape', module: 'scraper', title: 'Scrapes' },
-  { path: 'scrape/new', module: 'scraper', title: 'New Scrape' },
-  { path: 'scrape/:id', module: 'scraper', title: 'Scrape Detail' },
+  { path: 'extensions', module: 'challenger', title: 'Extensions' },
+  { path: 'extensions/:id', module: 'challenger', title: 'Extension Detail' },
   { path: 'crawl', module: 'crawler', title: 'Crawls' },
   { path: 'crawl/new', module: 'crawler', title: 'New Crawl' },
   { path: 'crawl/:id', module: 'crawler', title: 'Crawl Detail' },
+  { path: 'scrape', module: 'scraper', title: 'Scrapes' },
+  { path: 'scrape/new', module: 'scraper', title: 'New Scrape' },
+  { path: 'scrape/:id', module: 'scraper', title: 'Scrape Detail' },
+  { path: 'proxy', module: 'proxy', title: 'Proxy Servers' },
+  { path: 'proxy/new', module: 'proxy', title: 'New Proxy Server' },
+  { path: 'proxy/:id', module: 'proxy', title: 'Proxy Server Detail' },
 ];

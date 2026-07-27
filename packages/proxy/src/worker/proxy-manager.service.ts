@@ -1,140 +1,177 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { Injectable, Logger } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/mongodb';
-import type { ProxyProvider } from '../provider/proxy-provider.interface';
-import { ProxyPoolEntity, ProxyLeaseEntity } from '../data/entities';
-import {
-  PROXY_PROVIDER_META_KEY,
-  PROXY_PROVIDERS_TOKEN,
-  type ProxyProviderMeta,
-} from '../provider/proxy-provider.decorator';
+import type { RunOutcome } from '@tentacrawl/core';
+import { ProxyServerEntity, ProxyUsageEntity } from '../data/entities';
+import type { ProxyEndpoint, ProxyExtensionConfig } from '../data/schemas';
+
+export interface ProxyAcquireInput {
+  taskId: string;
+  taskType: string;
+  correlationId?: string;
+  serverId?: string;
+  rotation: ProxyExtensionConfig['rotation'];
+}
 
 export interface ProxyAssignment {
   server: string;
   username?: string;
   password?: string;
-  sessionId?: string;
-  leaseId: string;
+  serverId: string;
+  endpointId: string;
+  usageId: string;
 }
 
-interface ProviderFactory {
-  meta: ProxyProviderMeta;
-  fromPoolConfig: (raw: Record<string, unknown>) => ProxyProvider;
+export interface ProxyOutcomeOptions {
+  error?: string;
+  countBlockedAsFailure: boolean;
+}
+
+// avoids depending on the mongodb types directly
+interface AtomicCollection {
+  updateOne(
+    filter: Record<string, unknown>,
+    update: Record<string, unknown>,
+  ): Promise<unknown>;
 }
 
 @Injectable()
-export class ProxyManagerService implements OnModuleInit {
+export class ProxyManagerService {
   private readonly logger = new Logger(ProxyManagerService.name);
-  private readonly providers = new Map<string, ProxyProvider>();
-  private readonly factories = new Map<string, ProviderFactory>();
 
-  constructor(
-    private readonly em: EntityManager,
-    private readonly reflector: Reflector,
-    @Inject(PROXY_PROVIDERS_TOKEN) private readonly providerClasses: Function[],
-  ) {}
+  constructor(private readonly em: EntityManager) {}
 
-  async onModuleInit(): Promise<void> {
-    this.discoverFactories();
-    await this.loadProviders();
-  }
+  async acquire(input: ProxyAcquireInput): Promise<ProxyAssignment | null> {
+    const em = this.em.fork();
 
-  private discoverFactories(): void {
-    for (const cls of this.providerClasses) {
-      const meta = this.reflector.get<ProxyProviderMeta>(
-        PROXY_PROVIDER_META_KEY,
-        cls,
+    const servers = input.serverId
+      ? await em.find(ProxyServerEntity, { id: input.serverId })
+      : await em.find(ProxyServerEntity, { enabled: true });
+
+    const candidates = servers.filter((s) => s.enabled && s.endpoints.length > 0);
+    if (candidates.length === 0) {
+      this.logger.warn(
+        `No usable proxy server (serverId=${input.serverId ?? 'auto'} task=${input.taskId})`,
       );
-      if (!meta) continue;
-
-      if (typeof (cls as any).fromPoolConfig !== 'function') {
-        this.logger.warn(
-          `Provider '${meta.id}' does not implement static fromPoolConfig(), skipping`,
-        );
-        continue;
-      }
-
-      this.factories.set(meta.id, {
-        meta,
-        fromPoolConfig: (raw) => (cls as any).fromPoolConfig(raw),
-      });
-      this.logger.log(`Discovered provider factory: ${meta.id}`);
-    }
-  }
-
-  async acquireProxy(taskId: string, poolId: string): Promise<ProxyAssignment | null> {
-    let provider = this.providers.get(poolId);
-    if (!provider) {
-      // pool may have been created after boot; try loading on demand
-      const pool = await this.em.findOne(ProxyPoolEntity, poolId);
-      if (!pool) {
-        this.logger.warn(`Proxy pool ${poolId} not found`);
-        return null;
-      }
-      provider = this.createProvider(pool);
-      if (!provider) {
-        this.logger.warn(`No factory for provider '${pool.provider}' (pool=${poolId})`);
-        return null;
-      }
-      this.providers.set(poolId, provider);
+      return null;
     }
 
-    const session = await provider.acquireSession();
+    const { server, endpoint } = this.pick(candidates, input.rotation);
 
-    const lease = this.em.create(ProxyLeaseEntity, {
-      poolId,
-      taskId,
-      sessionId: session.sessionId,
-      status: 'ACTIVE',
+    const usage = em.create(ProxyUsageEntity, {
+      serverId: server.id,
+      endpointId: endpoint.id,
+      endpointUrl: endpoint.url,
+      taskId: input.taskId,
+      taskType: input.taskType,
+      correlationId: input.correlationId,
     });
-    await this.em.flush();
+    await em.flush();
 
-    this.logger.log(`Proxy acquired: lease=${lease.id} session=${session.sessionId} task=${taskId}`);
+    // atomic: avoids a read-modify-write race on the embedded array
+    await this.bumpEndpoint(
+      em,
+      server.id,
+      endpoint.id,
+      { timesUsed: 1 },
+      { lastUsedAt: new Date() },
+    );
+
+    this.logger.log(
+      `Proxy acquired: server=${server.name} endpoint=${endpoint.url} usage=${usage.id} task=${input.taskId}`,
+    );
 
     return {
-      server: session.endpoint.server,
-      username: session.endpoint.username,
-      password: session.endpoint.password,
-      sessionId: session.sessionId,
-      leaseId: lease.id,
+      server: endpoint.url,
+      username: server.username,
+      password: server.password,
+      serverId: server.id,
+      endpointId: endpoint.id,
+      usageId: usage.id,
     };
   }
 
-  async releaseProxy(leaseId: string, reason: 'completed' | 'error' = 'completed'): Promise<void> {
-    const lease = await this.em.findOne(ProxyLeaseEntity, leaseId);
-    if (!lease) return;
-
-    if (lease.sessionId) {
-      const provider = this.providers.get(lease.poolId);
-      if (provider) {
-        await provider.releaseSession(lease.sessionId);
-      }
+  async recordOutcome(
+    usageId: string,
+    outcome: RunOutcome,
+    options: ProxyOutcomeOptions,
+  ): Promise<void> {
+    const em = this.em.fork();
+    const usage = await em.findOne(ProxyUsageEntity, { id: usageId });
+    if (!usage || usage.outcome) {
+      return;
     }
 
-    lease.status = 'RELEASED';
-    lease.releasedAt = new Date();
-    await this.em.flush();
+    const finishedAt = new Date();
+    usage.outcome = outcome;
+    usage.error = options.error;
+    usage.finishedAt = finishedAt;
+    usage.durationMs = finishedAt.getTime() - usage.startedAt.getTime();
 
-    this.logger.log(`Proxy released: lease=${leaseId} reason=${reason}`);
-  }
+    const failed =
+      outcome === 'ERROR' ||
+      (outcome === 'BLOCKED' && options.countBlockedAsFailure);
 
-  private async loadProviders(): Promise<void> {
-    const pools = await this.em.findAll(ProxyPoolEntity);
-    for (const pool of pools) {
-      const provider = this.createProvider(pool);
-      if (provider) {
-        this.providers.set(pool.id, provider);
-        this.logger.log(`Loaded proxy provider: ${pool.provider} pool=${pool.id}`);
-      }
+    if (outcome === 'OK') {
+      await this.bumpEndpoint(em, usage.serverId, usage.endpointId, { timesSucceeded: 1 });
+    } else if (failed) {
+      await this.bumpEndpoint(
+        em,
+        usage.serverId,
+        usage.endpointId,
+        { timesFailed: 1 },
+        { lastFailedAt: finishedAt, lastError: options.error ?? outcome },
+      );
     }
+
+    await em.flush();
+    this.logger.log(`Proxy usage recorded: usage=${usageId} outcome=${outcome}`);
   }
 
-  private createProvider(pool: ProxyPoolEntity): ProxyProvider | undefined {
-    const factory = this.factories.get(pool.provider);
-    if (!factory) {
-      this.logger.warn(`Unknown proxy provider: ${pool.provider}`);
-      return undefined;
-    }
-    return factory.fromPoolConfig(pool.providerConfig);
+  // atomic positional update on a single embedded endpoint
+  private async bumpEndpoint(
+    em: EntityManager,
+    serverId: string,
+    endpointId: string,
+    inc: Record<string, number>,
+    set: Record<string, unknown> = {},
+  ): Promise<void> {
+    const update: Record<string, unknown> = {};
+    const incFields = prefixEndpointFields(inc);
+    const setFields = prefixEndpointFields(set);
+    if (Object.keys(incFields).length > 0) update.$inc = incFields;
+    if (Object.keys(setFields).length > 0) update.$set = setFields;
+    if (Object.keys(update).length === 0) return;
+
+    const collection = em.getCollection(ProxyServerEntity) as unknown as AtomicCollection;
+    await collection.updateOne({ _id: serverId, 'endpoints.id': endpointId }, update);
   }
+
+  private pick(
+    servers: ProxyServerEntity[],
+    rotation: ProxyExtensionConfig['rotation'],
+  ): { server: ProxyServerEntity; endpoint: ProxyEndpoint } {
+    const flat = servers.flatMap((server) =>
+      server.endpoints.map((endpoint) => ({ server, endpoint })),
+    );
+
+    if (rotation === 'random') {
+      return flat[Math.floor(Math.random() * flat.length)];
+    }
+
+    // round-robin: least recently used first, never-used endpoints win
+    return flat.reduce((best, current) => {
+      const bestAt = best.endpoint.lastUsedAt?.getTime() ?? 0;
+      const currentAt = current.endpoint.lastUsedAt?.getTime() ?? 0;
+      return currentAt < bestAt ? current : best;
+    });
+  }
+}
+
+// { timesUsed: 1 } -> { 'endpoints.$.timesUsed': 1 }
+function prefixEndpointFields<T>(fields: Record<string, T>): Record<string, T> {
+  const out: Record<string, T> = {};
+  for (const [key, value] of Object.entries(fields)) {
+    out[`endpoints.$.${key}`] = value;
+  }
+  return out;
 }

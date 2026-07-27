@@ -54,7 +54,6 @@ describe('htmlToMarkdown', () => {
   it('collapses excessive blank lines', () => {
     const html = '<p>A</p><br><br><br><br><br><p>B</p>';
     const md = htmlToMarkdown(html);
-    // should not have more than 2 consecutive newlines
     expect(md).not.toMatch(/\n{3,}/);
   });
 

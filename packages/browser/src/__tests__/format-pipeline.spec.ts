@@ -2,7 +2,6 @@ import { collectArtefacts } from '../format-pipeline';
 import type { Page } from 'playwright';
 import type { ArtefactFormat } from '@tentacrawl/core';
 
-// mock the sub-modules
 jest.mock('../markdown', () => ({
   htmlToMarkdown: jest.fn((html: string) => `# Mocked\n\n${html.slice(0, 20)}`),
 }));

@@ -56,7 +56,6 @@ function FlashProvider() {
   );
 }
 
-// convenience wrappers
 function flash(message: string, type: FlashType = 'info') {
   showToast(message, type);
 }

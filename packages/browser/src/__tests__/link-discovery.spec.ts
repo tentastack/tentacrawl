@@ -62,7 +62,6 @@ describe('discoverLinks', () => {
     ]);
 
     const result = await discoverLinks(page, baseUrl);
-    // both should resolve to the same URL after stripping fragments
     const pageLinks = result.filter((l) => l.url === 'https://example.com/page');
     expect(pageLinks).toHaveLength(1);
   });

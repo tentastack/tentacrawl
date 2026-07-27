@@ -1,19 +1,8 @@
 import { z } from 'zod';
+import { BASE_DSL_ACTION_NAMES } from '@tentacrawl/core/dsl-actions';
 
-export const DSL_ACTIONS = [
-  'goto',
-  'click',
-  'fill',
-  'waitFor',
-  'extractText',
-  'extractHtml',
-  'extractAttr',
-  'extract',
-  'screenshot',
-  'wait',
-  'saveSource',
-  'assert',
-] as const;
+// shared with core so ChallengerRegistry rejects colliding action names
+export const DSL_ACTIONS = BASE_DSL_ACTION_NAMES;
 
 export const dslActionSchema = z.enum(DSL_ACTIONS);
 export type DslAction = z.infer<typeof dslActionSchema>;
@@ -60,9 +49,53 @@ export const dslStepSchema = z
 
 export type DslStep = z.infer<typeof dslStepSchema>;
 
+export interface DslActionContribution {
+  action: string;
+  schema: z.ZodSchema;
+  compile?(step: unknown): unknown;
+}
+
+export interface ExtendedDslStep {
+  action: string;
+  selector?: string;
+  value?: string;
+  outputKey?: string;
+  attr?: string;
+  condition?: string;
+  timeoutMs?: number;
+  [k: string]: unknown;
+}
+
+export function buildStepSchema(
+  actions: ReadonlyArray<DslActionContribution> = [],
+): z.ZodType<ExtendedDslStep> {
+  let schema: z.ZodType<unknown> = dslStepSchema;
+  for (const contribution of actions) {
+    if (DSL_ACTIONS.includes(contribution.action as DslAction)) {
+      throw new Error(
+        `DSL action contribution overrides a base action: ${contribution.action}`,
+      );
+    }
+    schema = schema.or(contribution.schema);
+  }
+  return schema as z.ZodType<ExtendedDslStep>;
+}
+
+export function buildDocumentSchema(
+  actions: ReadonlyArray<DslActionContribution> = [],
+): z.ZodType<DslDocument> {
+  return z.object({
+    name: z.string().min(1),
+    steps: z.array(buildStepSchema(actions)).min(1),
+  }) as z.ZodType<DslDocument>;
+}
+
 export const dslDocumentSchema = z.object({
   name: z.string().min(1),
   steps: z.array(dslStepSchema).min(1),
 });
 
-export type DslDocument = z.infer<typeof dslDocumentSchema>;
+export type DslDocument = {
+  name: string;
+  steps: ExtendedDslStep[];
+};

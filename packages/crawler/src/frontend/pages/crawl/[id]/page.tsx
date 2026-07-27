@@ -37,13 +37,23 @@ import { CrawlPageStatusBadge } from '../../../components/crawl-page-status-badg
 import { CrawlStatusBadge } from '../../../components/crawl-status-badge';
 import { useCancelCrawl, useCrawl, useCrawlPage, useCrawlPages } from '../../../hooks/use-crawls';
 
-function formatNetworkPolicy(policy?: { mode: string; poolId?: string; proxy?: { server: string } }) {
+function formatNetworkPolicy(policy?: {
+  mode: string;
+  extension?: string;
+  serverId?: string;
+  proxy?: { server: string };
+}) {
   if (!policy) {
     return 'Unknown';
   }
 
   if (policy.mode === 'managed') {
-    return policy.poolId ? `Managed (${policy.poolId})` : 'Managed';
+    if (!policy.extension) {
+      return 'Managed';
+    }
+    return policy.serverId
+      ? `Managed (${policy.extension}: ${policy.serverId})`
+      : `Managed (${policy.extension})`;
   }
 
   if (policy.mode === 'static') {

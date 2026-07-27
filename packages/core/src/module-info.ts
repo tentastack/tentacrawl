@@ -4,6 +4,8 @@ export interface ModuleNavigation {
   path: string;
   order: number;
   group?: string;
+  // path of another module's navigation entry; nests this entry as its child
+  parent?: string;
 }
 
 export interface ModuleRoute {

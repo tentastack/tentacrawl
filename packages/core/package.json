@@ -11,6 +11,8 @@
       "notification": ["dist/notification/index.d.ts"],
       "schema": ["dist/schema/index.d.ts"],
       "url": ["dist/url.d.ts"],
+      "dsl-actions": ["dist/dsl-actions.d.ts"],
+      "logger": ["dist/logger.d.ts"],
       "module-info": ["src/module-info.ts"]
     }
   },
@@ -21,6 +23,8 @@
     "./notification": "./dist/notification/index.js",
     "./schema": "./dist/schema/index.js",
     "./url": "./dist/url.js",
+    "./dsl-actions": "./dist/dsl-actions.js",
+    "./logger": "./dist/logger.js",
     "./module-info": "./src/module-info.ts"
   },
   "scripts": {

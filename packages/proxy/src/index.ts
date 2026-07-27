@@ -3,18 +3,52 @@ import type { ModuleInfo } from '@tentacrawl/core';
 export const metadata: ModuleInfo = {
   name: 'proxy',
   title: 'Proxy Management',
-  version: '0.1.0',
-  description: 'Proxy pool management with provider adapters and lease lifecycle',
+  version: '0.2.0',
+  description: 'Manually defined proxy servers with shared credentials, endpoint rotation, and usage tracking',
+  requires: ['challenger'],
+  navigation: {
+    label: 'Proxy Servers',
+    icon: 'Network',
+    path: '/proxy',
+    order: 10,
+    parent: '/extensions',
+  },
+  routes: [
+    { path: 'proxy', page: 'proxy-server-list', title: 'Proxy Servers' },
+    { path: 'proxy/new', page: 'proxy-server-create', title: 'New Proxy Server' },
+    { path: 'proxy/:id', page: 'proxy-server-detail', title: 'Proxy Server Detail' },
+  ],
 };
 
 export { ProxyModule } from './proxy.module';
-export type { ProxyAssignment } from './worker/proxy-manager.service';
-export type { ProxyProvider, ProxySession, ProxyEndpoint, ProxyProviderFactory, AcquireOptions } from './provider/proxy-provider.interface';
-export { ProxyProviderMeta, PROXY_PROVIDERS_TOKEN, PROXY_PROVIDER_META_KEY } from './provider/proxy-provider.decorator';
-export type { ProxyProviderMeta as ProxyProviderMetaType } from './provider/proxy-provider.decorator';
-export { ProxyProviderRegistry } from './provider/proxy-provider.registry';
-export type { ProxyProviderInfo } from './provider/proxy-provider.registry';
-export { BrightDataProvider } from './provider/brightdata.provider';
-export type { BrightDataConfig } from './provider/brightdata.provider';
-export { brightdataPoolConfigSchema } from './provider/brightdata.config';
-export type { BrightDataPoolConfig } from './provider/brightdata.config';
+export { ProxyChallengerExtension } from './worker/proxy.challenger';
+export { ProxyManagerService } from './worker/proxy-manager.service';
+export type {
+  ProxyAcquireInput,
+  ProxyAssignment,
+  ProxyOutcomeOptions,
+} from './worker/proxy-manager.service';
+export {
+  createProxyServerDto,
+  updateProxyServerDto,
+  listProxyServersQuerySchema,
+  proxyServerSchema,
+  proxyEndpointSchema,
+  proxyEndpointInputSchema,
+  proxyLocationSchema,
+  proxyUsageSchema,
+  proxyExtensionConfigSchema,
+  PROXY_ROTATIONS,
+  PROXY_SERVER_SORTS,
+  PROXY_USAGE_FILTERS,
+} from './data/schemas';
+export type {
+  ProxyServer,
+  ProxyEndpoint,
+  ProxyEndpointInput,
+  ProxyUsage,
+  CreateProxyServerDto,
+  UpdateProxyServerDto,
+  ListProxyServersQuery,
+  ProxyExtensionConfig,
+} from './data/schemas';

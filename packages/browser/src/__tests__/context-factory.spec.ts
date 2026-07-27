@@ -6,6 +6,8 @@ const mockBrowser = {
   isConnected: jest.fn().mockReturnValue(true),
   newContext: jest.fn().mockResolvedValue(mockContext),
   close: jest.fn().mockResolvedValue(undefined),
+  on: jest.fn().mockReturnThis(),
+  contexts: jest.fn().mockReturnValue([]),
 };
 
 jest.mock('playwright', () => ({
@@ -14,7 +16,8 @@ jest.mock('playwright', () => ({
   },
 }));
 
-import { closeBrowser, createHardenedContext } from '../context-factory';
+import { createHardenedContext } from '../context-factory';
+import { closeBrowser } from '../browser-pool';
 
 describe('createHardenedContext', () => {
   beforeEach(() => {

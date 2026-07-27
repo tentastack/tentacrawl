@@ -20,21 +20,22 @@ This file defines the working conventions for AI agents and other automated cont
 
 ### Foundational packages
 
+- `packages/browser`: hardened Playwright context, artefact collection, link discovery
+- `packages/cli`: code generation for module registries
 - `packages/core`: shared schemas, config validation, module metadata, extension registry
 - `packages/dsl`: YAML DSL validation and compilation
-- `packages/browser`: hardened Playwright context, artefact collection, link discovery
 - `packages/ui`: shared frontend component library
-- `packages/cli`: code generation for module registries
 
 ### Current enabled modules
 
 Enabled in `modules.config.ts`:
 
 - `admin`: dashboard, worker presence, operational activity tracking
-- `notification`: lifecycle notifications
-- `proxy`: proxy pool management and provider adapters
-- `scraper`: single-page scraping module
+- `challenger`: extension framework host (dispatch, signals, and the extensions admin dashboard)
 - `crawler`: multi-page crawling module
+- `notification`: lifecycle notifications
+- `proxy`: manually defined proxy servers with endpoint rotation and usage tracking; the reference challenger extension
+- `scraper`: single-page scraping module
 
 ### Generated registries
 
@@ -106,7 +107,7 @@ Do not hand-edit those generated files unless the task explicitly targets the ge
 
 ## 9. Module Conventions
 
-Feature modules such as `admin`, `notification`, `proxy`, `scraper`, and `crawler` follow a deterministic structure. Foundational packages such as `core`, `dsl`, `browser`, `ui`, and `cli` are exempt.
+Feature modules such as `admin`, `challenger`, `crawler`, `notification`, `proxy`, and `scraper` follow a deterministic structure. Foundational packages such as `browser`, `cli`, `core`, `dsl`, and `ui` are exempt.
 
 ### Expected layout
 
@@ -119,7 +120,7 @@ packages/<module>/src/
     <module>.controller.ts
     <module>.api-module.ts
   worker/
-    <module>.subscriber.ts
+    <module>.processor.ts
     <module>.service.ts
     <module>.worker-module.ts
   data/
@@ -130,7 +131,6 @@ packages/<module>/src/
     pages/
     components/
     hooks/
-  provider/
   __tests__/
 ```
 
@@ -139,7 +139,7 @@ packages/<module>/src/
 - `src/index.ts` must export `metadata: ModuleInfo`.
 - Each module must expose `forApi()` and `forWorker()` on its NestJS module.
 - Modules self-configure through `ConfigService`; other modules should not reach into their internals.
-- Cross-module integration happens through `ModuleExtensionRegistry`, typed events, and public exports.
+- Cross-module integration happens through the `ChallengerRegistry`/`ChallengerDispatcher` extension framework (see `packages/challenger`), typed events, and public exports.
 - Each module owns its `data/entities.ts` and `data/schemas.ts`.
 - Real implementation files live under `src/`.
 - If a package needs subpath imports such as `@tentacrawl/<module>/data/schemas`, provide thin root proxy files that re-export from `src/`.
@@ -169,7 +169,7 @@ packages/<module>/src/
 
 - Route files in `apps/web/src/app/(admin)/` should stay thin and delegate to module pages.
 - Page components follow route-shaped directories under `frontend/pages/`.
-- Shared form config belongs in `frontend/components/formConfig.ts`.
+- Shared form config belongs in `frontend/components/form-config.ts`.
 - Data hooks belong in `frontend/hooks/` and own API interaction.
 
 ### Styling rules

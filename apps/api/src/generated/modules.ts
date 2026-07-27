@@ -3,15 +3,17 @@
 import type { DynamicModule } from '@nestjs/common';
 
 import { AdminModule } from '@tentacrawl/admin';
+import { ChallengerModule } from '@tentacrawl/challenger';
 import { NotificationModule } from '@tentacrawl/notification';
-import { ProxyModule } from '@tentacrawl/proxy';
-import { ScraperModule } from '@tentacrawl/scraper';
 import { CrawlerModule } from '@tentacrawl/crawler';
+import { ScraperModule } from '@tentacrawl/scraper';
+import { ProxyModule } from '@tentacrawl/proxy';
 
 export const apiModules: DynamicModule[] = [
   AdminModule.forApi(),
+  ChallengerModule.forApi(),
   NotificationModule.forApi(),
-  ProxyModule.forApi(),
-  ScraperModule.forApi(),
   CrawlerModule.forApi(),
+  ScraperModule.forApi(),
+  ProxyModule.forApi(),
 ];

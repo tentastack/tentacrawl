@@ -43,6 +43,7 @@ export interface CrudField {
   label: string;
   type: CrudFieldType;
   hideLabel?: boolean;
+  fullWidth?: boolean;
   sectionTitle?: string;
   sectionDescription?: string;
   sectionDividerBefore?: boolean;
@@ -56,6 +57,15 @@ export interface CrudField {
     value: unknown;
     onChange: (value: unknown) => void;
     error?: string;
+    /** All current form values, keyed by field name — for fields whose custom UI needs sibling values. */
+    values: Record<string, unknown>;
+  }) => React.ReactNode;
+  /** Rendered next to the field's group header instead of inline with the field. */
+  headerAction?: (props: {
+    value: unknown;
+    onChange: (value: unknown) => void;
+    error?: string;
+    values: Record<string, unknown>;
   }) => React.ReactNode;
 }
 
@@ -67,6 +77,10 @@ export interface CrudFormGroup {
 }
 
 function getFieldContainerClass(field: CrudField): string {
+  if (field.fullWidth) {
+    return 'md:col-span-2';
+  }
+
   if (
     field.type === 'custom'
     || field.type === 'textarea'
@@ -217,7 +231,6 @@ function CrudForm({
     [values, schema, onSubmit],
   );
 
-  // keyboard: Cmd/Ctrl+Enter to submit
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -244,7 +257,7 @@ function CrudForm({
               {field.required && <span className="ml-1 text-destructive">*</span>}
             </Label>
           ) : null}
-          {field.render({ value, onChange: (v) => setValue(field.name, v), error })}
+          {field.render({ value, onChange: (v) => setValue(field.name, v), error, values })}
           {field.description && (
             <p className="text-xs text-muted-foreground">{field.description}</p>
           )}
@@ -398,7 +411,6 @@ function CrudForm({
       );
     }
 
-    // text, url, number, email, password
     return (
       <div key={field.name} data-field-name={field.name} className={containerClassName}>
         <Label htmlFor={field.name}>
@@ -428,7 +440,6 @@ function CrudForm({
     );
   };
 
-  // group fields or render flat
   const renderFields = () => {
     if (groups && groups.length > 0) {
       const renderedNames = new Set<string>();
@@ -468,6 +479,14 @@ function CrudForm({
         const content = renderGroupContent(groupFields);
         const groupErrorCount = groupFields.filter((field) => Boolean(errors[field.name])).length;
 
+        const headerActionField = groupFields.find((field) => field.headerAction);
+        const headerAction = headerActionField?.headerAction?.({
+          value: values[headerActionField.name],
+          onChange: (v) => setValue(headerActionField.name, v),
+          error: errors[headerActionField.name],
+          values,
+        });
+
         const header = (
           <div className="space-y-1">
             <div className="flex items-center gap-3">
@@ -487,6 +506,13 @@ function CrudForm({
           </div>
         );
 
+        const headerRow = headerAction ? (
+          <div className="flex items-center justify-between gap-4">
+            {header}
+            {headerAction}
+          </div>
+        ) : header;
+
         const wrapperClassName = 'space-y-4 border-l-2 border-ink/20 pl-5';
 
         if (group.collapsible) {
@@ -494,7 +520,7 @@ function CrudForm({
             <details key={group.title} className={wrapperClassName}>
               <summary className="cursor-pointer list-none">
                 <div className="flex items-start justify-between gap-4">
-                  {header}
+                  {headerRow}
                   <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     <span>Optional</span>
                     <ChevronDown className="size-4" />
@@ -510,7 +536,7 @@ function CrudForm({
 
         return (
           <section key={group.title} className={wrapperClassName}>
-            {header}
+            {headerRow}
             {content}
           </section>
         );

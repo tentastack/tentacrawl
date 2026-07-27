@@ -121,9 +121,11 @@ function Sidebar({ items, open = true, onClose, footer, className }: SidebarProp
           {entries.map(({ item, showGroupLabel }, index) => {
             const href = getItemHref(item);
             const hasChildren = item.children && item.children.length > 0;
+            const linkableParent = hasChildren && !!href;
             const expanded = expandedItems.includes(item.label);
             const active = href ? isActive(href) : isParentActive(item);
             const subMenuId = `sidebar-submenu-${index}`;
+            const showChildren = hasChildren && (linkableParent || expanded);
 
             return (
               <React.Fragment key={item.label}>
@@ -135,7 +137,7 @@ function Sidebar({ items, open = true, onClose, footer, className }: SidebarProp
                   </div>
                 ) : null}
                 <div>
-                  {hasChildren ? (
+                  {hasChildren && !linkableParent ? (
                     <button
                       type="button"
                       onClick={() => toggleExpand(item.label)}
@@ -185,7 +187,7 @@ function Sidebar({ items, open = true, onClose, footer, className }: SidebarProp
                     </Link>
                   ) : null}
 
-                  {hasChildren && expanded ? (
+                  {showChildren ? (
                     <div id={subMenuId} className="ml-[1.375rem] mt-1 space-y-0.5 border-l border-ink/10 pl-4">
                       {item.children!.map((child) => (
                         <Link

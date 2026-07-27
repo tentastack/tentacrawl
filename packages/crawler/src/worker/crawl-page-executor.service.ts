@@ -1,22 +1,24 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/mongodb';
-import {
-  ModuleExtensionRegistry,
-} from '@tentacrawl/core';
+import { CHALLENGER_DISPATCHER } from '@tentacrawl/core';
 import { extractUrlHostname } from '@tentacrawl/core/url';
 import { ACTIVITY_LOG_RECORDER } from '@tentacrawl/core/activity';
-import type {
-  RunHookContext,
-  ArtefactFormat,
-} from '@tentacrawl/core';
+import type { ArtefactFormat, RunOutcome } from '@tentacrawl/core';
 import type { ActivityLogRecorder } from '@tentacrawl/core/activity';
 import {
   createHardenedContext,
   collectArtefacts,
   discoverLinks,
+  instrumentPage,
+  navigateWithChallenger,
   normalizeDiscoveredUrl,
 } from '@tentacrawl/browser';
-import type { ContextOptions } from '@tentacrawl/browser';
+import type {
+  ChallengerDispatcher,
+  ChallengerRunSeed,
+  ChallengerRunSession,
+  ContextOptions,
+} from '@tentacrawl/browser';
 import { CrawlEntity, CrawlPageEntity } from '../data/entities';
 import type { CrawlPagePayload, CrawlPageResult } from '../data/schemas';
 
@@ -26,7 +28,8 @@ export class CrawlPageExecutorService {
 
   constructor(
     private readonly em: EntityManager,
-    private readonly extensions: ModuleExtensionRegistry,
+    @Inject(CHALLENGER_DISPATCHER)
+    private readonly dispatcher: ChallengerDispatcher,
     @Inject(ACTIVITY_LOG_RECORDER)
     private readonly activityLogRecorder: ActivityLogRecorder,
   ) {}
@@ -74,109 +77,126 @@ export class CrawlPageExecutorService {
       },
     });
 
-    const hooks = this.extensions.getHooks();
     const hostname = extractUrlHostname(url).toLowerCase();
     const origin = this.resolveOrigin(url, hostname);
-    const hookCtx: RunHookContext = {
+    const seed: ChallengerRunSeed = {
       taskId: pageId,
       taskType: 'crawl-page',
-      correlationId: crawlId,
       workerId,
+      source: 'crawl-page',
+      correlationId: crawlId,
       hostname,
       origin,
+      initialUrl: url,
       networkPolicy: payload.networkPolicy,
-      hookData: new Map(),
     };
 
+    const session = await this.dispatcher.beginRun(seed);
     let result: CrawlPageResult;
+    let runError: Error | undefined;
 
     try {
-      for (const hook of hooks) {
-        await hook.beforeRun?.(hookCtx);
-      }
-
       const contextOpts: ContextOptions = {
         locale: payload.locale,
         timezone: payload.timezone,
         headers: payload.headers,
       };
-
-      if (hookCtx.proxy) {
-        contextOpts.proxy = hookCtx.proxy;
-      } else if (payload.networkPolicy.mode === 'static') {
+      if (payload.networkPolicy.mode === 'static') {
         contextOpts.proxy = payload.networkPolicy.proxy;
       }
 
-      const { context, stealth } = await createHardenedContext(contextOpts);
+      const { context, stealth } = await createHardenedContext(contextOpts, session);
 
       const env = {
         workerId,
         userAgent: stealth.userAgent,
         viewport: `${stealth.viewport.width}x${stealth.viewport.height}`,
-        proxyServer: contextOpts.proxy?.server,
+        proxyServer: session.ctx.proxy?.server ?? contextOpts.proxy?.server,
       };
 
       try {
         const page = await context.newPage();
+        await instrumentPage(page, session, 'crawl-page');
 
-        const response = await page.goto(url, {
-          timeout: payload.timeout,
-          waitUntil: payload.waitFor as 'load' | 'domcontentloaded' | 'networkidle',
-        });
+        const { response, aborted } = await navigateWithChallenger(
+          page,
+          url,
+          {
+            timeout: payload.timeout,
+            waitUntil: payload.waitFor as 'load' | 'domcontentloaded' | 'networkidle',
+          },
+          session,
+          'crawl-page',
+        );
         const finalUrl = normalizeDiscoveredUrl(page.url()) ?? normalizeDiscoveredUrl(url) ?? url;
 
-        const statusCode = response?.status() ?? 0;
-        if (statusCode >= 400) {
+        if (aborted) {
           result = {
-            outcome: statusCode === 403 || statusCode === 429 ? 'BLOCKED' : 'ERROR',
+            outcome: 'BLOCKED',
             artefacts: {},
             env,
             durationMs: Date.now() - start,
-            httpStatus: statusCode,
-            error: `HTTP ${statusCode}`,
+            error: `Navigation aborted by challenger: ${aborted.reason ?? 'no reason'}`,
             finalUrl,
             discoveredUrls: [],
           };
         } else {
-          const artefacts = await collectArtefacts(
-            page,
-            payload.artefacts as ArtefactFormat[],
-            finalUrl,
-          );
+          const statusCode = response?.status() ?? 0;
+          if (statusCode >= 400) {
+            result = {
+              outcome: statusCode === 403 || statusCode === 429 ? 'BLOCKED' : 'ERROR',
+              artefacts: {},
+              env,
+              durationMs: Date.now() - start,
+              httpStatus: statusCode,
+              error: `HTTP ${statusCode}`,
+              finalUrl,
+              discoveredUrls: [],
+            };
+          } else {
+            const artefacts = await collectArtefacts(
+              page,
+              payload.artefacts as ArtefactFormat[],
+              finalUrl,
+              session,
+            );
 
-          const allLinks = await discoverLinks(page, finalUrl);
-          const internalUrls = allLinks
-            .filter((l) => l.isInternal)
-            .map((l) => l.url);
+            const allLinks = await discoverLinks(page, finalUrl, session);
+            const internalUrls = allLinks
+              .filter((l) => l.isInternal)
+              .map((l) => l.url);
 
-          result = {
-            outcome: 'OK',
-            artefacts,
-            env,
-            durationMs: Date.now() - start,
-            finalUrl,
-            discoveredUrls: internalUrls,
-          };
+            result = {
+              outcome: 'OK',
+              artefacts,
+              env,
+              durationMs: Date.now() - start,
+              finalUrl,
+              discoveredUrls: internalUrls,
+            };
+          }
         }
       } finally {
         await context.close().catch(() => {});
       }
     } catch (err: unknown) {
-      const error = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Crawl ${crawlId} page ${pageId} failed: ${error}`);
+      runError = err instanceof Error ? err : new Error(String(err));
+      this.logger.error(`Crawl ${crawlId} page ${pageId} failed: ${runError.message}`);
       result = {
         outcome: 'ERROR',
         artefacts: {},
         durationMs: Date.now() - start,
-        error,
+        error: runError.message,
         discoveredUrls: [],
       };
     } finally {
-      for (const hook of hooks) {
-        await hook.afterRun?.(hookCtx).catch((e: unknown) => {
-          this.logger.warn(`afterRun hook error: ${e}`);
-        });
-      }
+      result ??= {
+        outcome: 'ERROR',
+        artefacts: {},
+        durationMs: Date.now() - start,
+        discoveredUrls: [],
+      };
+      result.outcome = await this.finalizeRun(session, result, runError);
     }
 
     await this.savePageResult(crawlId, pageId, result);
@@ -200,6 +220,32 @@ export class CrawlPageExecutorService {
       });
     }
     return result;
+  }
+
+  private async finalizeRun(
+    session: ChallengerRunSession,
+    result: CrawlPageResult,
+    error: Error | undefined,
+  ): Promise<RunOutcome> {
+    let outcome = result.outcome;
+    try {
+      const outcomeResult = await session.dispatch('run-outcome', {
+        outcome,
+        error: error?.message,
+      });
+      if (outcomeResult.outcomeOverride) {
+        outcome = outcomeResult.outcomeOverride.status;
+        result.error = result.error ?? outcomeResult.outcomeOverride.reason;
+      }
+      const appended = session.collectAppendedArtifacts();
+      if (Object.keys(appended).length > 0) {
+        result.artefacts = { ...result.artefacts, ...appended };
+      }
+    } catch (err) {
+      this.logger.warn(`Challenger run-outcome dispatch failed: ${err}`);
+    }
+    await session.end(outcome, error);
+    return outcome;
   }
 
   private async savePageResult(

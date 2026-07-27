@@ -3,15 +3,17 @@
 import type { DynamicModule } from '@nestjs/common';
 
 import { AdminModule } from '@tentacrawl/admin';
+import { ChallengerModule } from '@tentacrawl/challenger';
 import { NotificationModule } from '@tentacrawl/notification';
-import { ProxyModule } from '@tentacrawl/proxy';
-import { ScraperModule } from '@tentacrawl/scraper';
 import { CrawlerModule } from '@tentacrawl/crawler';
+import { ScraperModule } from '@tentacrawl/scraper';
+import { ProxyModule } from '@tentacrawl/proxy';
 
 export const workerModules: DynamicModule[] = [
   AdminModule.forWorker(),
+  ChallengerModule.forWorker(),
   NotificationModule.forWorker(),
-  ProxyModule.forWorker(),
-  ScraperModule.forWorker(),
   CrawlerModule.forWorker(),
+  ScraperModule.forWorker(),
+  ProxyModule.forWorker(),
 ];

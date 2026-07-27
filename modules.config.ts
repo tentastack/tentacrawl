@@ -3,10 +3,17 @@ export interface ModuleEntry {
   package: string;
 }
 
+// Run `pnpm generate` after changing this list.
 export const enabledModules: ModuleEntry[] = [
+  // Foundation
   { id: 'admin', package: '@tentacrawl/admin' },
+  { id: 'challenger', package: '@tentacrawl/challenger' },
   { id: 'notification', package: '@tentacrawl/notification' },
-  { id: 'proxy', package: '@tentacrawl/proxy' },
-  { id: 'scraper', package: '@tentacrawl/scraper' },
+
+  // Features
   { id: 'crawler', package: '@tentacrawl/crawler' },
+  { id: 'scraper', package: '@tentacrawl/scraper' },
+
+  // Optional
+  { id: 'proxy', package: '@tentacrawl/proxy' },
 ];

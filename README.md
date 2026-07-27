@@ -62,18 +62,19 @@ Enabled modules are declared in `modules.config.ts` and currently include:
 | Module | Purpose | UI Surface |
 | --- | --- | --- |
 | `admin` | dashboard, worker presence, operational activity tracking | `/dashboard` |
-| `notification` | lifecycle notifications for scrape, crawl, and future module events | notification center |
-| `proxy` | proxy pool management and provider adapters | backend only |
-| `scraper` | single-page scraping with configurable artefact formats | `/scrape/*` |
+| `challenger` | extension framework host: dispatch, signals, and the extensions admin dashboard | `/extensions` |
 | `crawler` | multi-page crawling with depth, breadth, and URL filtering controls | `/crawl/*` |
+| `notification` | lifecycle notifications for scrape, crawl, and future module events | notification center |
+| `proxy` | manually defined proxy servers with endpoint rotation and usage tracking; reference challenger extension | full module |
+| `scraper` | single-page scraping with configurable artefact formats | `/scrape/*` |
 
 Foundational packages used by those modules:
 
+- `packages/browser`: hardened Playwright context creation, artefact collection, link discovery
+- `packages/cli`: module registry generator
 - `packages/core`: shared schemas, config validation, module metadata, extension registry
 - `packages/dsl`: YAML DSL parsing, validation, and compilation
-- `packages/browser`: hardened Playwright context creation, artefact collection, link discovery
 - `packages/ui`: shared React components, layout, data and form helpers
-- `packages/cli`: module registry generator
 
 ## Repository Layout
 
@@ -86,6 +87,7 @@ apps/
 packages/
   admin/         dashboard and worker presence module
   browser/       Playwright runtime helpers
+  challenger/    challenger extension framework host (dispatch, signals, admin)
   cli/           generated module registry builder
   core/          shared contracts, schemas, config, extension hooks
   crawler/       recursive crawl module
@@ -172,6 +174,25 @@ NEXT_PUBLIC_API_URL=http://localhost:3000
 
 If not set, the web app defaults to `http://localhost:3000` for API calls.
 
+### Optional tuning
+
+These have safe defaults and are only needed to tune runtime behavior:
+
+```dotenv
+# Worker: browser process pool cap (distinct launch profiles)
+BROWSER_POOL_MAX=4
+
+# Worker: how long the challenger dispatcher caches extension config/enable
+# flags before re-reading them (0 disables caching for strictly live toggles)
+CHALLENGER_CONFIG_CACHE_TTL_MS=3000
+
+# Worker: comma-separated allowlist of challenger capabilities (unset = all)
+CHALLENGER_ALLOWED_CAPABILITIES=proxy,session,fingerprint
+```
+
+Logs are emitted as structured JSON via `pino`. The API tags each request with a
+correlation id (`x-correlation-id`, generated when absent and echoed back).
+
 ## Local Development
 
 The quickest local path is one command:
@@ -209,6 +230,10 @@ Default local URLs:
 - API: `http://localhost:3000`
 - Web: `http://localhost:3001`
 - Worker health: `http://localhost:3002/health`
+
+Both the API and worker expose `/health` (readiness: verifies Mongo and Redis,
+returns 503 when either is down), `/health/ready` (same readiness check), and
+`/health/live` (liveness only, dependency-free).
 
 The web app redirects `/` to `/dashboard`.
 

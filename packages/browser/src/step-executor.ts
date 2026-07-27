@@ -1,5 +1,8 @@
 import type { Page } from 'playwright';
 import type { CompiledStep } from '@tentacrawl/dsl';
+import type { ChallengerStepInfo } from '@tentacrawl/core';
+import type { ChallengerRunSession } from './port/challenger-dispatcher';
+import { navigateWithChallenger } from './challenger-integration';
 
 function randomDelay(minMs: number, maxMs: number): Promise<void> {
   const ms = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
@@ -19,13 +22,39 @@ export interface StepResult {
 interface ActionResult {
   output?: string;
   httpStatus?: number;
+  error?: string;
 }
 
-async function handleGoto(page: Page, step: CompiledStep): Promise<ActionResult> {
-  const response = await page.goto(step.value!, {
-    waitUntil: 'domcontentloaded',
-    timeout: step.timeoutMs ?? 30_000,
-  });
+export function toStepInfo(step: CompiledStep): ChallengerStepInfo {
+  return {
+    ...step.fields,
+    index: step.index,
+    action: step.action,
+    selector: step.selector,
+    value: step.value,
+    outputKey: step.outputKey,
+    attr: step.attr,
+    condition: step.condition,
+    timeoutMs: step.timeoutMs,
+  };
+}
+
+async function handleGoto(
+  page: Page,
+  step: CompiledStep,
+  session?: ChallengerRunSession,
+): Promise<ActionResult> {
+  const { response, aborted } = await navigateWithChallenger(
+    page,
+    step.value!,
+    { waitUntil: 'domcontentloaded', timeout: step.timeoutMs ?? 30_000 },
+    session,
+    'dsl-step',
+    toStepInfo(step),
+  );
+  if (aborted) {
+    return { error: `Navigation aborted by challenger: ${aborted.reason ?? 'no reason'}` };
+  }
   return { httpStatus: response?.status() };
 }
 
@@ -158,7 +187,11 @@ async function handleAssert(
   }
 }
 
-type ActionHandler = (page: Page, step: CompiledStep) => Promise<ActionResult>;
+type ActionHandler = (
+  page: Page,
+  step: CompiledStep,
+  session?: ChallengerRunSession,
+) => Promise<ActionResult>;
 
 const ACTION_HANDLERS: Record<string, ActionHandler> = {
   goto: handleGoto,
@@ -177,6 +210,7 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
 export async function executeStep(
   page: Page,
   step: CompiledStep,
+  session?: ChallengerRunSession,
 ): Promise<StepResult> {
   const start = Date.now();
   const handler = ACTION_HANDLERS[step.action];
@@ -184,6 +218,9 @@ export async function executeStep(
   if (!handler) {
     if (step.action === 'assert') {
       return handleAssert(page, step, start);
+    }
+    if (session?.resolveAction(step.action)) {
+      return executeChallengerAction(page, step, session, start);
     }
     return {
       index: step.index,
@@ -194,13 +231,14 @@ export async function executeStep(
   }
 
   try {
-    const actionResult = await handler(page, step);
+    const actionResult = await handler(page, step, session);
     return {
       index: step.index,
       action: step.action,
       durationMs: Date.now() - start,
       output: actionResult.output,
       httpStatus: actionResult.httpStatus,
+      error: actionResult.error,
     };
   } catch (err) {
     return {
@@ -210,4 +248,44 @@ export async function executeStep(
       error: err instanceof Error ? err.message : String(err),
     };
   }
+}
+
+async function executeChallengerAction(
+  page: Page,
+  step: CompiledStep,
+  session: ChallengerRunSession,
+  start: number,
+): Promise<StepResult> {
+  try {
+    session.ctx.raw.page = page;
+    const result = await session.runAction(step.action, toStepInfo(step));
+    if (!result) {
+      return {
+        index: step.index,
+        action: step.action,
+        durationMs: Date.now() - start,
+        error: `Unknown action: ${step.action}`,
+      };
+    }
+    return {
+      index: step.index,
+      action: step.action,
+      durationMs: Date.now() - start,
+      output: result.output === undefined ? undefined : serializeOutput(result.output),
+      httpStatus: result.httpStatus,
+      error: result.error,
+      preconditionFailed: result.preconditionFailed,
+    };
+  } catch (err) {
+    return {
+      index: step.index,
+      action: step.action,
+      durationMs: Date.now() - start,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+function serializeOutput(output: unknown): string {
+  return typeof output === 'string' ? output : JSON.stringify(output);
 }

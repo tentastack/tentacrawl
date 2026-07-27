@@ -1,5 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
+import helmet from 'helmet';
+import pinoHttp from 'pino-http';
+import { createPinoRootLogger, PinoNestLogger } from '@tentacrawl/core/logger';
 import { AppModule } from './app.module';
 
 function parseCorsOrigins(value: string): string[] {
@@ -10,9 +14,34 @@ function parseCorsOrigins(value: string): string[] {
 }
 
 async function bootstrap() {
+  const rootLogger = createPinoRootLogger({ name: 'tentacrawl-api' });
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
+  app.useLogger(new PinoNestLogger(rootLogger));
+  app.flushLogs();
+
+  // CORP relaxed: the web app consumes this API cross-origin
+  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+
+  // correlation id echoed back to the caller; health/metrics excluded from logs
+  app.use(
+    pinoHttp({
+      logger: rootLogger,
+      autoLogging: {
+        ignore: (req) => {
+          const url = req.url ?? '';
+          return url.startsWith('/health') || url.startsWith('/metrics');
+        },
+      },
+      genReqId: (req, res) => {
+        const header = req.headers['x-correlation-id'];
+        const id = (Array.isArray(header) ? header[0] : header) || randomUUID();
+        res.setHeader('x-correlation-id', id);
+        return id;
+      },
+    }),
+  );
 
   const allowedOrigins = parseCorsOrigins(
     process.env['CORS_ORIGIN'] ?? 'http://localhost:3001,http://127.0.0.1:3001',

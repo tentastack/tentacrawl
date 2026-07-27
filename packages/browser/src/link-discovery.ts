@@ -1,5 +1,6 @@
 import type { Page } from 'playwright';
 import type { PageLink } from '@tentacrawl/core';
+import type { ChallengerRunSession } from './port/challenger-dispatcher';
 
 export function normalizeDiscoveredUrl(url: string): string | null {
   let parsed: URL;
@@ -30,6 +31,7 @@ export function normalizeDiscoveredUrl(url: string): string | null {
 export async function discoverLinks(
   page: Page,
   baseUrl: string,
+  session?: ChallengerRunSession,
 ): Promise<PageLink[]> {
   const normalizedBaseUrl = normalizeDiscoveredUrl(baseUrl);
   const baseReferenceUrl = normalizedBaseUrl ?? new URL(baseUrl).toString();
@@ -61,11 +63,21 @@ export async function discoverLinks(
     if (seen.has(resolved)) continue;
     seen.add(resolved);
 
-    links.push({
+    const link: PageLink = {
       url: resolved,
       text: raw.text,
       isInternal: new URL(resolved).origin === baseOrigin,
-    });
+    };
+
+    if (session?.hasHandlers('discovered-link')) {
+      const result = await session.dispatch('discovered-link', {
+        raw: { page },
+        link,
+      });
+      if (result.dropLink) continue;
+    }
+
+    links.push(link);
   }
 
   return links;

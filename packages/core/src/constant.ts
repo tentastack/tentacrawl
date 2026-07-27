@@ -28,3 +28,5 @@ export const DEFAULT_WAIT_FOR = 'domcontentloaded';
 
 export const CRAWL_DEFAULT_MAX_DEPTH = 2;
 export const CRAWL_DEFAULT_MAX_PAGES = 50;
+
+export const CHALLENGER_DISPATCHER = Symbol('CHALLENGER_DISPATCHER');

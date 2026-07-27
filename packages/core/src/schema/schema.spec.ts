@@ -74,15 +74,25 @@ describe('networkPolicySchema', () => {
     expect(() => networkPolicySchema.parse({ mode: 'static' })).toThrow();
   });
 
-  it('accepts managed mode with poolId', () => {
-    const result = networkPolicySchema.parse({ mode: 'managed', poolId: 'pool-1' });
+  it('accepts managed mode with extension and optional serverId', () => {
+    const result = networkPolicySchema.parse({ mode: 'managed', extension: 'proxy/manual' });
     expect(result.mode).toBe('managed');
     if (result.mode === 'managed') {
-      expect(result.poolId).toBe('pool-1');
+      expect(result.extension).toBe('proxy/manual');
+      expect(result.serverId).toBeUndefined();
+    }
+
+    const specific = networkPolicySchema.parse({
+      mode: 'managed',
+      extension: 'proxy/manual',
+      serverId: 'srv-1',
+    });
+    if (specific.mode === 'managed') {
+      expect(specific.serverId).toBe('srv-1');
     }
   });
 
-  it('rejects managed mode without poolId', () => {
+  it('rejects managed mode without extension', () => {
     expect(() => networkPolicySchema.parse({ mode: 'managed' })).toThrow();
   });
 

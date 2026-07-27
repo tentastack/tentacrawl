@@ -2,10 +2,11 @@
 // @ts-nocheck
 
 import * as adminEntities from '@tentacrawl/admin/data/entities';
+import * as challengerEntities from '@tentacrawl/challenger/data/entities';
 import * as notificationEntities from '@tentacrawl/notification/data/entities';
-import * as proxyEntities from '@tentacrawl/proxy/data/entities';
-import * as scraperEntities from '@tentacrawl/scraper/data/entities';
 import * as crawlerEntities from '@tentacrawl/crawler/data/entities';
+import * as scraperEntities from '@tentacrawl/scraper/data/entities';
+import * as proxyEntities from '@tentacrawl/proxy/data/entities';
 
 function collectEntities(...sources: Record<string, unknown>[]): unknown[] {
   const entities: unknown[] = [];
@@ -17,4 +18,4 @@ function collectEntities(...sources: Record<string, unknown>[]): unknown[] {
   return entities;
 }
 
-export const MODULE_ENTITIES = collectEntities(adminEntities, notificationEntities, proxyEntities, scraperEntities, crawlerEntities);
+export const MODULE_ENTITIES = collectEntities(adminEntities, challengerEntities, notificationEntities, crawlerEntities, scraperEntities, proxyEntities);

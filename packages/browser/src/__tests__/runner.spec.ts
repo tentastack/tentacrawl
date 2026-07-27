@@ -35,6 +35,8 @@ const mockContext = {
 const mockBrowser = {
   isConnected: jest.fn().mockReturnValue(true),
   newContext: jest.fn().mockResolvedValue(mockContext),
+  on: jest.fn().mockReturnThis(),
+  contexts: jest.fn().mockReturnValue([]),
 };
 
 jest.mock('playwright', () => ({

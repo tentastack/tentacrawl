@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as ts from 'typescript';
 import type { ModuleInfo } from '@tentacrawl/core';
 
 interface ModuleEntry {
@@ -26,20 +27,111 @@ function loadModulesConfig(): ModuleEntry[] {
     return [];
   }
 
-  const content = fs.readFileSync(configPath, 'utf-8');
-  const matches = content.matchAll(
-    /\{\s*id:\s*'([^']+)',\s*package:\s*'([^']+)'\s*\}/g,
+  const initializer = findExportedInitializer(
+    parseSource(configPath),
+    'enabledModules',
   );
+  if (!initializer || !ts.isArrayLiteralExpression(initializer)) {
+    console.warn('modules.config.ts has no enabledModules array literal; nothing to generate.');
+    return [];
+  }
+
+  const value = evaluateNode(initializer);
+  if (!Array.isArray(value)) return [];
 
   const entries: ModuleEntry[] = [];
-  for (const match of matches) {
-    entries.push({ id: match[1], package: match[2] });
+  for (const item of value) {
+    if (item && typeof item === 'object') {
+      const record = item as Record<string, unknown>;
+      if (typeof record.id === 'string' && typeof record.package === 'string') {
+        entries.push({ id: record.id, package: record.package });
+      }
+    }
   }
   return entries;
 }
 
+// read statically, never executed: any literal object literal survives format/quote variation
+function parseSource(filePath: string): ts.SourceFile {
+  return ts.createSourceFile(
+    filePath,
+    fs.readFileSync(filePath, 'utf-8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+}
+
+function findExportedInitializer(
+  source: ts.SourceFile,
+  exportName: string,
+): ts.Expression | undefined {
+  for (const statement of source.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    const exported = statement.modifiers?.some(
+      (m) => m.kind === ts.SyntaxKind.ExportKeyword,
+    );
+    if (!exported) continue;
+    for (const decl of statement.declarationList.declarations) {
+      if (ts.isIdentifier(decl.name) && decl.name.text === exportName && decl.initializer) {
+        return unwrap(decl.initializer);
+      }
+    }
+  }
+  return undefined;
+}
+
+function unwrap(node: ts.Expression): ts.Expression {
+  if (
+    ts.isAsExpression(node) ||
+    ts.isSatisfiesExpression(node) ||
+    ts.isParenthesizedExpression(node)
+  ) {
+    return unwrap(node.expression);
+  }
+  return node;
+}
+
+// non-literal fields (identifiers, calls, templates) are skipped, not evaluated
+function evaluateNode(node: ts.Expression): unknown {
+  const expr = unwrap(node);
+  if (ts.isStringLiteralLike(expr)) return expr.text;
+  if (ts.isNumericLiteral(expr)) return Number(expr.text);
+  if (expr.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (expr.kind === ts.SyntaxKind.FalseKeyword) return false;
+  if (expr.kind === ts.SyntaxKind.NullKeyword) return null;
+  if (
+    ts.isPrefixUnaryExpression(expr) &&
+    expr.operator === ts.SyntaxKind.MinusToken &&
+    ts.isNumericLiteral(expr.operand)
+  ) {
+    return -Number(expr.operand.text);
+  }
+  if (ts.isArrayLiteralExpression(expr)) {
+    return expr.elements
+      .filter((el): el is ts.Expression => !ts.isSpreadElement(el))
+      .map((el) => evaluateNode(el));
+  }
+  if (ts.isObjectLiteralExpression(expr)) {
+    const result: Record<string, unknown> = {};
+    for (const prop of expr.properties) {
+      if (!ts.isPropertyAssignment(prop)) continue;
+      const key = propertyName(prop.name);
+      if (key === undefined) continue;
+      result[key] = evaluateNode(prop.initializer);
+    }
+    return result;
+  }
+  return undefined;
+}
+
+function propertyName(name: ts.PropertyName): string | undefined {
+  if (ts.isIdentifier(name) || ts.isStringLiteralLike(name) || ts.isNumericLiteral(name)) {
+    return name.text;
+  }
+  return undefined;
+}
+
 function resolveModuleSrcDir(entry: ModuleEntry): string | null {
-  // workspace package: @tentacrawl/foo -> packages/foo/src
   const pkgName = entry.package.replace('@tentacrawl/', '');
   const srcDir = path.join(WORKSPACE_ROOT, 'packages', pkgName, 'src');
   if (fs.existsSync(srcDir)) return srcDir;
@@ -50,80 +142,82 @@ function loadModuleMetadata(srcDir: string): ModuleInfo | null {
   const indexPath = path.join(srcDir, 'index.ts');
   if (!fs.existsSync(indexPath)) return null;
 
-  const content = fs.readFileSync(indexPath, 'utf-8');
-  // parse metadata object from the file
-  const metadataMatch = content.match(
-    /export\s+const\s+metadata\s*:\s*ModuleInfo\s*=\s*(\{[\s\S]*?\n\});/,
-  );
-  if (!metadataMatch) return null;
+  const initializer = findExportedInitializer(parseSource(indexPath), 'metadata');
+  if (!initializer || !ts.isObjectLiteralExpression(initializer)) return null;
 
-  try {
-    // simple eval-safe extraction of string fields
-    const raw = metadataMatch[1];
-    const name = raw.match(/name:\s*'([^']+)'/)?.[1] ?? '';
-    const title = raw.match(/title:\s*'([^']+)'/)?.[1] ?? '';
-    const version = raw.match(/version:\s*'([^']+)'/)?.[1] ?? '0.0.0';
-    const description = raw.match(/description:\s*'([^']+)'/)?.[1] ?? '';
+  const raw = evaluateNode(initializer);
+  if (!raw || typeof raw !== 'object') return null;
+  return normalizeMetadata(raw as Record<string, unknown>);
+}
 
-    const requiresMatch = raw.match(/requires:\s*\[([^\]]*)\]/);
-    const requires = requiresMatch
-      ? requiresMatch[1]
-          .split(',')
-          .map((s) => s.trim().replace(/'/g, ''))
-          .filter(Boolean)
-      : [];
+function normalizeMetadata(raw: Record<string, unknown>): ModuleInfo | null {
+  const name = asString(raw.name);
+  const title = asString(raw.title);
+  if (!name || !title) return null;
 
-    const optionalMatch = raw.match(/optional:\s*\[([^\]]*)\]/);
-    const optional = optionalMatch
-      ? optionalMatch[1]
-          .split(',')
-          .map((s) => s.trim().replace(/'/g, ''))
-          .filter(Boolean)
-      : [];
+  const info: ModuleInfo = {
+    name,
+    title,
+    version: asString(raw.version) ?? '0.0.0',
+    description: asString(raw.description) ?? '',
+    requires: asStringArray(raw.requires),
+    optional: asStringArray(raw.optional),
+  };
 
-    // parse navigation block
-    let navigation: ModuleInfo['navigation'] | undefined;
-    const navMatch = raw.match(/navigation:\s*\{([^}]+)\}/);
-    if (navMatch) {
-      const navRaw = navMatch[1];
-      const navLabel = navRaw.match(/label:\s*'([^']+)'/)?.[1];
-      const navIcon = navRaw.match(/icon:\s*'([^']+)'/)?.[1];
-      const navPath = navRaw.match(/path:\s*'([^']+)'/)?.[1];
-      const navOrder = navRaw.match(/order:\s*(\d+)/)?.[1];
-      const navGroup = navRaw.match(/group:\s*'([^']+)'/)?.[1];
-      if (navLabel && navIcon && navPath && navOrder) {
-        navigation = {
-          label: navLabel,
-          icon: navIcon,
-          path: navPath,
-          order: Number(navOrder),
-          ...(navGroup ? { group: navGroup } : {}),
-        };
-      }
-    }
+  const navigation = normalizeNavigation(raw.navigation);
+  if (navigation) info.navigation = navigation;
 
-    // parse routes array
-    let routes: ModuleInfo['routes'] | undefined;
-    const routesMatch = raw.match(/routes:\s*\[([\s\S]*?)\]/);
-    if (routesMatch) {
-      const routesRaw = routesMatch[1];
-      const routeEntries = [...routesRaw.matchAll(/\{([^}]+)\}/g)];
-      routes = routeEntries
-        .map((m) => {
-          const rPath = m[1].match(/path:\s*'([^']+)'/)?.[1];
-          const rPage = m[1].match(/page:\s*'([^']+)'/)?.[1];
-          const rTitle = m[1].match(/title:\s*'([^']+)'/)?.[1];
-          if (rPath && rPage && rTitle) return { path: rPath, page: rPage, title: rTitle };
-          return null;
-        })
-        .filter((r): r is NonNullable<typeof r> => r !== null);
-      if (routes.length === 0) routes = undefined;
-    }
+  const routes = normalizeRoutes(raw.routes);
+  if (routes.length > 0) info.routes = routes;
 
-    return { name, title, version, description, requires, optional, navigation, routes };
-  } catch {
-    return null;
+  return info;
+}
+
+function normalizeNavigation(value: unknown): ModuleInfo['navigation'] | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const nav = value as Record<string, unknown>;
+  const label = asString(nav.label);
+  const icon = asString(nav.icon);
+  const navPath = asString(nav.path);
+  const order = asNumber(nav.order);
+  if (!label || !icon || !navPath || order === undefined) return undefined;
+
+  const group = asString(nav.group);
+  const parent = asString(nav.parent);
+  return {
+    label,
+    icon,
+    path: navPath,
+    order,
+    ...(group ? { group } : {}),
+    ...(parent ? { parent } : {}),
+  };
+}
+
+function normalizeRoutes(value: unknown): NonNullable<ModuleInfo['routes']> {
+  if (!Array.isArray(value)) return [];
+  const routes: NonNullable<ModuleInfo['routes']> = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') continue;
+    const route = entry as Record<string, unknown>;
+    const rPath = asString(route.path);
+    const rPage = asString(route.page);
+    const rTitle = asString(route.title);
+    if (rPath && rPage && rTitle) routes.push({ path: rPath, page: rPage, title: rTitle });
   }
+  return routes;
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function asNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 }
 
 function scanModule(entry: ModuleEntry): ScannedModule | null {
@@ -309,27 +403,26 @@ export function main(): void {
     `Found ${modules.length} module(s): ${modules.map((m) => m.entry.id).join(', ') || '(none)'}`,
   );
 
-  // generate worker registry
   const workerDir = path.join(WORKSPACE_ROOT, 'apps', 'worker', 'src', 'generated');
   const workerModulesContent = generateWorkerModules(modules);
   const workerEntitiesContent = generateEntities(modules);
   writeIfChanged(path.join(workerDir, 'modules.ts'), workerModulesContent);
   writeIfChanged(path.join(workerDir, 'entities.ts'), workerEntitiesContent);
 
-  // generate api registry
   const apiDir = path.join(WORKSPACE_ROOT, 'apps', 'api', 'src', 'generated');
   const apiModulesContent = generateApiModules(modules);
   const apiEntitiesContent = generateEntities(modules);
   writeIfChanged(path.join(apiDir, 'modules.ts'), apiModulesContent);
   writeIfChanged(path.join(apiDir, 'entities.ts'), apiEntitiesContent);
 
-  // generate web (frontend) registry
   const webDir = path.join(WORKSPACE_ROOT, 'apps', 'web', 'src', 'generated');
   if (fs.existsSync(path.join(WORKSPACE_ROOT, 'apps', 'web'))) {
     const navigationContent = generateNavigation(modules);
     const routesContent = generateRoutes(modules);
+    const pageRegistryContent = generatePageRegistry(modules);
     writeIfChanged(path.join(webDir, 'navigation.ts'), navigationContent);
     writeIfChanged(path.join(webDir, 'routes.ts'), routesContent);
+    writeIfChanged(path.join(webDir, 'page-registry.ts'), pageRegistryContent);
   }
 
   console.log('Registry files generated.');
@@ -337,23 +430,32 @@ export function main(): void {
 
 function generateNavigation(modules: ScannedModule[]): string {
   const navModules = modules.filter((m) => m.metadata.navigation);
+  const rootModules = navModules.filter((m) => !m.metadata.navigation!.parent);
+  const childModules = navModules.filter((m) => m.metadata.navigation!.parent);
+
   const lines = [
     '// AUTO-GENERATED by @tentacrawl/cli — do not edit',
     "import type { SidebarNavItem } from '@tentacrawl/ui';",
     '',
   ];
 
-  // collect icon names from all modules
+  // collect icon names from root modules (children render without icons)
   const icons = new Set<string>();
-  for (const mod of navModules) {
+  for (const mod of rootModules) {
     icons.add(mod.metadata.navigation!.icon);
   }
   lines.push(`import { ${[...icons].join(', ')} } from 'lucide-react';`);
   lines.push('');
   lines.push('export const navigationItems: SidebarNavItem[] = [');
 
-  for (const mod of navModules) {
+  for (const mod of rootModules) {
     const nav = mod.metadata.navigation!;
+    const children = childModules
+      .filter((child) => child.metadata.navigation!.parent === nav.path)
+      .sort(
+        (a, b) => a.metadata.navigation!.order - b.metadata.navigation!.order,
+      );
+
     lines.push('  {');
     lines.push(`    label: '${nav.label}',`);
     lines.push(`    path: '${nav.path}',`);
@@ -362,7 +464,27 @@ function generateNavigation(modules: ScannedModule[]): string {
     if (nav.group) {
       lines.push(`    group: '${nav.group}',`);
     }
+    if (children.length > 0) {
+      lines.push('    children: [');
+      for (const child of children) {
+        const childNav = child.metadata.navigation!;
+        lines.push(`      { label: '${childNav.label}', href: '${childNav.path}' },`);
+      }
+      lines.push('    ],');
+    }
     lines.push('  },');
+  }
+
+  const orphanChildren = childModules.filter(
+    (child) =>
+      !rootModules.some(
+        (root) => root.metadata.navigation!.path === child.metadata.navigation!.parent,
+      ),
+  );
+  for (const mod of orphanChildren) {
+    console.warn(
+      `Module '${mod.entry.id}' navigation parent '${mod.metadata.navigation!.parent}' not found; entry omitted.`,
+    );
   }
 
   lines.push('];');
@@ -387,6 +509,46 @@ function generateRoutes(modules: ScannedModule[]): string {
   for (const mod of routeModules) {
     for (const route of mod.metadata.routes!) {
       lines.push(`  { path: '${route.path}', module: '${mod.entry.id}', title: '${route.title}' },`);
+    }
+  }
+
+  lines.push('];');
+  lines.push('');
+  return lines.join('\n');
+}
+
+function pageComponentName(page: string): string {
+  const base = page
+    .split(/[-_]/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
+  return base.endsWith('Page') ? base : `${base}Page`;
+}
+
+function generatePageRegistry(modules: ScannedModule[]): string {
+  const routeModules = modules.filter(
+    (m) => m.hasFrontend && m.metadata.routes && m.metadata.routes.length > 0,
+  );
+  const lines = [
+    '// AUTO-GENERATED by @tentacrawl/cli — do not edit',
+    '// @ts-nocheck',
+    "import { lazy } from 'react';",
+    "import type { ComponentType, LazyExoticComponent } from 'react';",
+    '',
+    'export interface PageRegistryEntry {',
+    '  path: string;',
+    '  Component: LazyExoticComponent<ComponentType<{ id?: string }>>;',
+    '}',
+    '',
+    'export const pageRegistry: PageRegistryEntry[] = [',
+  ];
+
+  for (const mod of routeModules) {
+    for (const route of mod.metadata.routes!) {
+      const component = pageComponentName(route.page);
+      lines.push(
+        `  { path: '${route.path}', Component: lazy(() => import('${mod.entry.package}/frontend').then((m) => ({ default: m.${component} }))) },`,
+      );
     }
   }
 

@@ -16,7 +16,6 @@ export const CRAWL_PAGE_STATUS = ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'
 export const crawlPageStatusSchema = z.enum(CRAWL_PAGE_STATUS);
 export type CrawlPageStatus = z.infer<typeof crawlPageStatusSchema>;
 
-// runner-level outcome (used by browser package)
 export const RUN_OUTCOME = ['OK', 'ERROR', 'PRECONDITION_FAILED', 'BLOCKED'] as const;
 export const runOutcomeSchema = z.enum(RUN_OUTCOME);
 export type RunOutcome = z.infer<typeof runOutcomeSchema>;

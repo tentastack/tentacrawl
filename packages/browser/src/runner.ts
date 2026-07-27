@@ -11,7 +11,9 @@ import {
   type ContextOptions,
   type ProxyConfig,
 } from './context-factory';
-import { executeStep } from './step-executor';
+import { executeStep, toStepInfo } from './step-executor';
+import { instrumentPage } from './challenger-integration';
+import type { ChallengerRunSession } from './port/challenger-dispatcher';
 import type { StealthDefaults } from './stealth';
 
 export interface RunnerResult {
@@ -31,6 +33,7 @@ export interface RunnerOptions {
   proxy?: ProxyConfig & { id?: string };
   stealth?: Partial<StealthDefaults>;
   debugScreenshots?: DebugScreenshotConfig;
+  session?: ChallengerRunSession;
 }
 
 export interface DebugScreenshotConfig {
@@ -47,6 +50,7 @@ export async function runDsl(
   options: RunnerOptions,
 ): Promise<RunnerResult> {
   const contextOptions: ContextOptions = {};
+  const session = options.session;
 
   if (options.proxy) {
     contextOptions.proxy = {
@@ -61,8 +65,9 @@ export async function runDsl(
 
   const screenshotDir = resolveScreenshotDir(options.debugScreenshots);
 
-  const { context, stealth } = await createHardenedContext(contextOptions);
+  const { context, stealth } = await createHardenedContext(contextOptions, session);
   const page = await context.newPage();
+  await instrumentPage(page, session, 'dsl-runner');
 
   const artifacts: Record<string, unknown> = {};
   const traceSteps: TraceStep[] = [];
@@ -70,7 +75,38 @@ export async function runDsl(
 
   try {
     for (const step of compiled.steps) {
-      const result = await executeStep(page, step);
+      if (session) {
+        const before = await session.dispatch('before-step', {
+          source: 'dsl-step',
+          raw: { page },
+          step: toStepInfo(step),
+        });
+        if (before.failRun) {
+          status = before.failRun.status;
+          break;
+        }
+      }
+
+      const result = await executeStep(page, step, session);
+
+      if (session) {
+        const after = await session.dispatch('after-step', {
+          source: 'dsl-step',
+          raw: { page },
+          step: toStepInfo(step),
+          stepResult: {
+            index: result.index,
+            action: result.action,
+            durationMs: result.durationMs,
+            httpStatus: result.httpStatus,
+            error: result.error,
+          },
+        });
+        if (after.failRun) {
+          status = after.failRun.status;
+          break;
+        }
+      }
 
       const traceStep: TraceStep = {
         index: result.index,
@@ -129,7 +165,7 @@ export async function runDsl(
     env: {
       userAgent: stealth.userAgent,
       viewport: `${stealth.viewport.width}x${stealth.viewport.height}`,
-      proxyServer: options.proxy?.server,
+      proxyServer: options.proxy?.server ?? session?.ctx.proxy?.server,
     },
   };
 }

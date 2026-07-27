@@ -1,9 +1,9 @@
 import { Global, Module } from '@nestjs/common';
-import { ModuleExtensionRegistry } from './module-extension.registry';
+import { ChallengerRegistry } from './challenger.registry';
 
 @Global()
 @Module({
-  providers: [ModuleExtensionRegistry],
-  exports: [ModuleExtensionRegistry],
+  providers: [ChallengerRegistry],
+  exports: [ChallengerRegistry],
 })
 export class CoreExtensionModule {}

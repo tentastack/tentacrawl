@@ -8,6 +8,14 @@ import type { NetworkPolicy } from '@tentacrawl/core/schema';
 import { Button } from '../primitives/button';
 import { Input } from '../primitives/input';
 import { Label } from '../primitives/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../primitives/select';
+import { apiCall } from '../lib/api-client';
 import { cn } from '../lib/utils';
 
 type FieldProps = {
@@ -41,7 +49,8 @@ function normalizeNetworkPolicy(value: unknown): NetworkPolicy {
 
   const candidate = value as Partial<NetworkPolicy> & {
     proxy?: { server?: string; username?: string; password?: string };
-    poolId?: string;
+    extension?: string;
+    serverId?: string;
   };
 
   if (candidate.mode === 'static') {
@@ -58,7 +67,8 @@ function normalizeNetworkPolicy(value: unknown): NetworkPolicy {
   if (candidate.mode === 'managed') {
     return {
       mode: 'managed',
-      poolId: candidate.poolId ?? '',
+      extension: candidate.extension ?? '',
+      serverId: candidate.serverId || undefined,
     };
   }
 
@@ -111,13 +121,35 @@ function getTimezoneSuggestions(): string[] {
   return dedupeStrings(rawTimeZones.map((timezone) => timezone.name));
 }
 
+export interface SearchableOption {
+  value: string;
+  label: string;
+}
+
+function toSearchableOptions(values: string[]): SearchableOption[] {
+  return values.map((value) => ({ value, label: value }));
+}
+
+// ISO 3166-1 alpha-2 country options derived from the timezone database.
+export function getCountryOptions(): SearchableOption[] {
+  const byCode = new Map<string, string>();
+  for (const timezone of rawTimeZones) {
+    if (timezone.countryCode && timezone.countryName) {
+      byCode.set(timezone.countryCode, timezone.countryName);
+    }
+  }
+  return [...byCode.entries()]
+    .map(([value, label]) => ({ value, label: `${label} (${value})` }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 interface SearchableOptionFieldProps {
   id: string;
   value: unknown;
   onChange: (value: unknown) => void;
   error?: string;
   placeholder: string;
-  options: string[];
+  options: SearchableOption[];
   emptyLabel: string;
 }
 
@@ -131,22 +163,28 @@ function SearchableOptionField({
   emptyLabel,
 }: SearchableOptionFieldProps) {
   const selectedValue = typeof value === 'string' ? value : '';
-  const [query, setQuery] = React.useState(selectedValue);
+  const selectedLabel = React.useMemo(
+    () => options.find((option) => option.value === selectedValue)?.label ?? selectedValue,
+    [options, selectedValue],
+  );
+  const [query, setQuery] = React.useState(selectedLabel);
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
-    setQuery(selectedValue);
-  }, [selectedValue]);
+    setQuery(selectedLabel);
+  }, [selectedLabel]);
 
   const filteredOptions = React.useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     if (normalizedQuery.length === 0) {
-      return options.slice(0, 40);
+      return options;
     }
 
-    return options
-      .filter((option) => option.toLowerCase().includes(normalizedQuery))
-      .slice(0, 80);
+    return options.filter(
+      (option) =>
+        option.label.toLowerCase().includes(normalizedQuery) ||
+        option.value.toLowerCase().includes(normalizedQuery),
+    );
   }, [options, query]);
 
   const showDropdown = open && (query.trim().length > 0 || filteredOptions.length > 0);
@@ -160,7 +198,7 @@ function SearchableOptionField({
         }
 
         setOpen(false);
-        setQuery(selectedValue);
+        setQuery(selectedLabel);
       }}
     >
       <div className="relative">
@@ -198,20 +236,20 @@ function SearchableOptionField({
               <div className="max-h-64 overflow-y-auto py-1">
                 {filteredOptions.map((option) => (
                   <button
-                    key={option}
+                    key={option.value}
                     type="button"
                     className={cn(
                       'flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground',
-                      selectedValue === option && 'bg-accent text-accent-foreground',
+                      selectedValue === option.value && 'bg-accent text-accent-foreground',
                     )}
                     onMouseDown={(event) => {
                       event.preventDefault();
-                      onChange(option);
-                      setQuery(option);
+                      onChange(option.value);
+                      setQuery(option.label);
                       setOpen(false);
                     }}
                   >
-                    <span className="truncate">{option}</span>
+                    <span className="truncate">{option.label}</span>
                   </button>
                 ))}
               </div>
@@ -242,7 +280,7 @@ export function LocaleField({ value, onChange, error }: FieldProps) {
       onChange={onChange}
       error={error}
       placeholder="Search locale"
-      options={suggestions}
+      options={toSearchableOptions(suggestions)}
       emptyLabel="No locale selected. The runner default locale will be used."
     />
   );
@@ -258,9 +296,187 @@ export function TimezoneField({ value, onChange, error }: FieldProps) {
       onChange={onChange}
       error={error}
       placeholder="Search timezone"
-      options={suggestions}
+      options={toSearchableOptions(suggestions)}
       emptyLabel="No timezone selected. The runner default timezone will be used."
     />
+  );
+}
+
+export function CountryField({
+  value,
+  onChange,
+  error,
+  emptyLabel = 'No country selected.',
+}: FieldProps & { emptyLabel?: string }) {
+  const suggestions = React.useMemo(() => getCountryOptions(), []);
+
+  return (
+    <SearchableOptionField
+      id="request-country"
+      value={value}
+      onChange={onChange}
+      error={error}
+      placeholder="Search country"
+      options={suggestions}
+      emptyLabel={emptyLabel}
+    />
+  );
+}
+
+interface ProxyCapableExtension {
+  id: string;
+  enabled: boolean;
+  selection?: {
+    capability: string;
+    optionsPath: string;
+    autoLabel?: string;
+  };
+}
+
+interface ProxySelectionOption {
+  value: string;
+  label: string;
+  description?: string;
+  disabled?: boolean;
+}
+
+const AUTO_SERVER_VALUE = '__auto__';
+
+function ManagedPolicyFields({
+  policy,
+  updatePolicy,
+}: {
+  policy: Extract<NetworkPolicy, { mode: 'managed' }>;
+  updatePolicy: (next: NetworkPolicy) => void;
+}) {
+  const [extensions, setExtensions] = React.useState<ProxyCapableExtension[] | null>(null);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [options, setOptions] = React.useState<ProxySelectionOption[] | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    apiCall<ProxyCapableExtension[]>('/challengers?capability=proxy').then((result) => {
+      if (cancelled) {
+        return;
+      }
+      if (result.error || !result.data) {
+        setLoadError(result.error ?? 'Failed to load proxy extensions');
+        return;
+      }
+      setExtensions(result.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const selectedId = policy.extension;
+  const selected = extensions?.find((extension) => extension.id === selectedId);
+  const optionsPath = selected?.selection?.optionsPath;
+
+  React.useEffect(() => {
+    setOptions(null);
+    if (!optionsPath) {
+      return;
+    }
+    let cancelled = false;
+    apiCall<ProxySelectionOption[]>(optionsPath).then((result) => {
+      if (!cancelled && !result.error && result.data) {
+        setOptions(result.data);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [optionsPath]);
+
+  const usableExtensions = extensions?.filter((extension) => extension.enabled) ?? [];
+
+  React.useEffect(() => {
+    if (!selectedId && usableExtensions.length === 1) {
+      updatePolicy({
+        mode: 'managed',
+        extension: usableExtensions[0].id,
+        serverId: undefined,
+      });
+    }
+  }, [selectedId, extensions]);
+
+  if (loadError) {
+    return <p className="text-xs text-muted-foreground">{loadError}</p>;
+  }
+
+  if (extensions && usableExtensions.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        No proxy-capable extension is installed and enabled. Add one (for example the
+        proxy module) or use a static proxy instead.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div className="space-y-2">
+        <Label htmlFor="network-policy-extension">Proxy extension</Label>
+        <Select
+          value={selectedId || undefined}
+          onValueChange={(extension) =>
+            updatePolicy({ mode: 'managed', extension, serverId: undefined })
+          }
+        >
+          <SelectTrigger id="network-policy-extension">
+            <SelectValue placeholder={extensions ? 'Select extension' : 'Loading...'} />
+          </SelectTrigger>
+          <SelectContent>
+            {(extensions ?? []).map((extension) => (
+              <SelectItem
+                key={extension.id}
+                value={extension.id}
+                disabled={!extension.enabled}
+              >
+                {extension.id}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {selected?.selection ? (
+        <div className="space-y-2">
+          <Label htmlFor="network-policy-server">Proxy server</Label>
+          <Select
+            value={policy.serverId ?? AUTO_SERVER_VALUE}
+            onValueChange={(serverValue) =>
+              updatePolicy({
+                mode: 'managed',
+                extension: selected.id,
+                serverId: serverValue === AUTO_SERVER_VALUE ? undefined : serverValue,
+              })
+            }
+          >
+            <SelectTrigger id="network-policy-server">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={AUTO_SERVER_VALUE}>
+                {selected.selection.autoLabel ?? 'Auto'}
+              </SelectItem>
+              {(options ?? []).map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  disabled={option.disabled}
+                >
+                  {option.label}
+                  {option.description ? ` (${option.description})` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -284,8 +500,8 @@ export function NetworkPolicyField({ value, onChange, error }: FieldProps) {
     },
     {
       value: 'managed',
-      title: 'Managed pool',
-      description: 'Use a proxy pool selected by its pool identifier.',
+      title: 'Managed proxy',
+      description: 'Route through a proxy provided by an installed extension.',
     },
   ] as const;
 
@@ -314,7 +530,7 @@ export function NetworkPolicyField({ value, onChange, error }: FieldProps) {
                 }
 
                 if (option.value === 'managed') {
-                  updatePolicy({ mode: 'managed', poolId: '' });
+                  updatePolicy({ mode: 'managed', extension: '', serverId: undefined });
                   return;
                 }
 
@@ -388,20 +604,7 @@ export function NetworkPolicyField({ value, onChange, error }: FieldProps) {
       ) : null}
 
       {policy.mode === 'managed' ? (
-        <div className="space-y-2">
-          <Label htmlFor="network-policy-pool">Pool ID</Label>
-          <Input
-            id="network-policy-pool"
-            placeholder="proxy-pool-id"
-            value={policy.poolId}
-            onChange={(event) => {
-              updatePolicy({
-                mode: 'managed',
-                poolId: event.target.value,
-              });
-            }}
-          />
-        </div>
+        <ManagedPolicyFields policy={policy} updatePolicy={updatePolicy} />
       ) : null}
       {renderErrorBadge(error)}
     </div>

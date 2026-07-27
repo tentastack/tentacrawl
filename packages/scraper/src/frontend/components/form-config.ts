@@ -10,7 +10,6 @@ import {
 } from '@tentacrawl/ui';
 import { createScrapeDto } from '../../data/schemas';
 
-// Re-use the backend Zod schema for frontend form validation.
 export const createScrapeFormSchema = createScrapeDto.extend({
   async: z.literal(true).default(true),
 });

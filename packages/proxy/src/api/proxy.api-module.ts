@@ -1,24 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { ProxyPoolEntity, ProxyLeaseEntity } from '../data/entities';
-import { ProxyPoolController } from './proxy-pool.controller';
-import { ProxyPoolService } from './proxy-pool.service';
-import { ProxyProviderRegistrar } from './proxy-provider.registrar';
-import { ProxyProviderRegistry } from '../provider/proxy-provider.registry';
-import { BrightDataProvider } from '../provider/brightdata.provider';
-import { PROXY_PROVIDERS_TOKEN } from '../provider/proxy-provider.decorator';
+import { ProxyServerEntity, ProxyUsageEntity } from '../data/entities';
+import { ProxyServerController } from './proxy-server.controller';
+import { ProxyServerService } from './proxy-server.service';
+import { ProxyValidationService } from './proxy-validation.service';
 
 @Module({
-  imports: [MikroOrmModule.forFeature([ProxyPoolEntity, ProxyLeaseEntity])],
-  controllers: [ProxyPoolController],
-  providers: [
-    ProxyProviderRegistry,
-    ProxyPoolService,
-    ProxyProviderRegistrar,
-    {
-      provide: PROXY_PROVIDERS_TOKEN,
-      useValue: [BrightDataProvider],
-    },
-  ],
+  imports: [MikroOrmModule.forFeature([ProxyServerEntity, ProxyUsageEntity])],
+  controllers: [ProxyServerController],
+  providers: [ProxyServerService, ProxyValidationService],
 })
 export class ProxyApiModule {}
