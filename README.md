@@ -62,6 +62,7 @@ Enabled modules are declared in `modules.config.ts` and currently include:
 | Module | Purpose | UI Surface |
 | --- | --- | --- |
 | `admin` | dashboard, worker presence, operational activity tracking | `/dashboard` |
+| `captchaai` | CaptchaAI challenger extension: detects captchas and solves reCAPTCHA v2/v3/Enterprise, Turnstile, and image captchas | extensions dashboard |
 | `challenger` | extension framework host: dispatch, signals, and the extensions admin dashboard | `/extensions` |
 | `crawler` | multi-page crawling with depth, breadth, and URL filtering controls | `/crawl/*` |
 | `notification` | lifecycle notifications for scrape, crawl, and future module events | notification center |
@@ -87,6 +88,7 @@ apps/
 packages/
   admin/         dashboard and worker presence module
   browser/       Playwright runtime helpers
+  captchaai/     CaptchaAI captcha detection and solving module
   challenger/    challenger extension framework host (dispatch, signals, admin)
   cli/           generated module registry builder
   core/          shared contracts, schemas, config, extension hooks
@@ -188,6 +190,19 @@ CHALLENGER_CONFIG_CACHE_TTL_MS=3000
 
 # Worker: comma-separated allowlist of challenger capabilities (unset = all)
 CHALLENGER_ALLOWED_CAPABILITIES=proxy,session,fingerprint
+```
+
+The `captchaai` module needs an account key before it can solve anything. Without
+it the module stays inert and only reports the captchas it detects:
+
+```dotenv
+# API and worker: CaptchaAI account key
+CAPTCHAAI_API_KEY=...
+
+# Optional CaptchaAI tuning
+CAPTCHAAI_BASE_URL=https://ocr.captchaai.com
+CAPTCHAAI_POLL_INTERVAL_MS=5000
+CAPTCHAAI_TIMEOUT_MS=120000
 ```
 
 Logs are emitted as structured JSON via `pino`. The API tags each request with a
