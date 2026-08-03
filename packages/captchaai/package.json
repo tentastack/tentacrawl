@@ -1,0 +1,40 @@
+{
+  "name": "@tentacrawl/captchaai",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "data/schemas": ["dist/data/schemas.d.ts"]
+    }
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./data/schemas": "./dist/data/schemas.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "lint": "eslint src/",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "@tentacrawl/challenger": "workspace:*",
+    "@tentacrawl/core": "workspace:*",
+    "zod": "^3.24.0"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "jest": "^30.2.0",
+    "playwright": "^1.50.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.7.0"
+  }
+}
