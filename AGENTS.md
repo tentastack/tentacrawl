@@ -66,9 +66,16 @@ Do not hand-edit those generated files unless the task explicitly targets the ge
 - Database collection names may remain plural.
 - Avoid non-ASCII characters in code and config.
 - Keep files cohesive and focused on one responsibility.
-- Keep comments to the minimum required for clarity.
-- Use short inline comments only when the code would otherwise be hard to parse.
-- Do not add JSDoc blocks, section banners, or comments that restate names.
+### Comments
+
+Default to no comment. A comment is a cost: it drifts from the code and adds noise to every future read.
+
+- Write one only when a reader who understands TypeScript would still misread the code without it, and the code cannot be made clearer instead. Prefer a better name, a smaller function, or a named constant over a comment.
+- Legitimate cases are narrow: a non-obvious external constraint, a deliberate trade-off, or a subtle ordering or failure requirement that the code cannot express.
+- Do not add JSDoc blocks, section banners, or trailing explanations of a change.
+- Do not restate what the code already says. If a comment paraphrases the next line, the identifiers, the types, or the diff, delete it.
+- When editing, leave existing comments alone unless the change makes them wrong.
+- Before finishing, re-read every comment added and delete each one that does not meet the bar above.
 
 ## 4. Type Safety and Validation
 
