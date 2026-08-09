@@ -105,6 +105,7 @@ export interface ChallengerStageResult {
 
 export interface ChallengerRunSession {
   readonly ctx: ChallengerRuntimeContext;
+  diagnostic?(scope: string, message: string, error?: unknown): void;
   hasHandlers(stage: ChallengerStage): boolean;
   dispatch(stage: ChallengerStage, patch?: ChallengerStagePatch): Promise<ChallengerStageResult>;
   hasRouteHandlers(): boolean;

@@ -38,7 +38,7 @@ export async function instrumentPage(
           raw: { page, request },
           requestUrl: request.url(),
         })
-        .catch(() => {});
+        .catch((err) => session.diagnostic?.('request', request.url(), err));
     });
   }
 
@@ -54,7 +54,7 @@ export async function instrumentPage(
             httpStatus: response.status(),
             redirectedFromUrl: redirectedFrom?.url(),
           })
-          .catch(() => {});
+          .catch((err) => session.diagnostic?.('response', response.url(), err));
       }
       if (session.hasHandlers('redirect') && response.status() >= 300 && response.status() < 400) {
         const location = response.headers()['location'];
@@ -67,7 +67,7 @@ export async function instrumentPage(
               toUrl: new URL(location, response.url()).toString(),
               status: response.status(),
             })
-            .catch(() => {});
+            .catch((err) => session.diagnostic?.('redirect', response.url(), err));
         }
       }
     });
@@ -98,7 +98,8 @@ async function installInterception(
         postData: request.postData() ?? undefined,
         isNavigationRequest: request.isNavigationRequest(),
       };
-    } catch {
+    } catch (err) {
+      session.diagnostic?.('route.request-info', request.url(), err);
       await route.continue().catch(() => {});
       return;
     }
@@ -106,7 +107,8 @@ async function installInterception(
     let decision;
     try {
       decision = await session.routeRequest(info);
-    } catch {
+    } catch (err) {
+      session.diagnostic?.('route.request', info.url, err);
       decision = { action: 'continue' as const };
     }
 
@@ -145,7 +147,8 @@ async function installInterception(
     let fetched: APIResponse;
     try {
       fetched = await route.fetch(continueOptions);
-    } catch {
+    } catch (err) {
+      session.diagnostic?.('route.fetch', info.url, err);
       await route.continue(continueOptions).catch(() => {});
       return;
     }
@@ -153,7 +156,8 @@ async function installInterception(
     let result;
     try {
       result = await session.routeResponse(info, await buildResponseInfo(fetched, info));
-    } catch {
+    } catch (err) {
+      session.diagnostic?.('route.response', info.url, err);
       result = undefined;
     }
 
@@ -163,7 +167,8 @@ async function installInterception(
           ? { response: fetched, status: result.status, headers: result.headers, body: result.body }
           : { response: fetched },
       );
-    } catch {
+    } catch (err) {
+      session.diagnostic?.('route.fulfill', info.url, err);
       await route.fulfill({ response: fetched }).catch(() => {});
     }
   });
@@ -264,7 +269,10 @@ export async function dispatchSessionSnapshot(
 ): Promise<void> {
   if (!session?.hasHandlers('session-snapshot')) return;
   const snapshot = await captureSessionSnapshot(page);
-  if (!snapshot) return;
+  if (!snapshot) {
+    session.diagnostic?.('session-snapshot', `capture failed for ${page.url()}`);
+    return;
+  }
   await session.dispatch('session-snapshot', {
     source: sourceOverride ?? session.ctx.source,
     raw: { page },
