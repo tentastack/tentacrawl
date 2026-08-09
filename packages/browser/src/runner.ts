@@ -67,7 +67,7 @@ export async function runDsl(
 
   const { context, stealth } = await createHardenedContext(contextOptions, session);
   const page = await context.newPage();
-  await instrumentPage(page, session, 'dsl-runner');
+  await instrumentPage(page, session);
 
   const artifacts: Record<string, unknown> = {};
   const traceSteps: TraceStep[] = [];

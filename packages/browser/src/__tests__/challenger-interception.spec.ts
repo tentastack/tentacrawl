@@ -2,6 +2,10 @@ import type { Page } from 'playwright';
 import type { ChallengerRunSession, RouteDecision } from '../port/challenger-dispatcher';
 import { instrumentPage } from '../challenger-integration';
 
+function fakeCtx(): ChallengerRunSession['ctx'] {
+  return { source: 'scrape-simple' } as ChallengerRunSession['ctx'];
+}
+
 interface FakeRoute {
   continue: jest.Mock;
   abort: jest.Mock;
@@ -37,6 +41,7 @@ async function installAndCapture(decision: RouteDecision): Promise<FakeRoute> {
   const page = { context: () => context } as unknown as Page;
 
   const session: Partial<ChallengerRunSession> = {
+    ctx: fakeCtx(),
     dispatch: jest.fn().mockResolvedValue({}),
     hasHandlers: () => false,
     hasRouteHandlers: () => true,
@@ -45,7 +50,7 @@ async function installAndCapture(decision: RouteDecision): Promise<FakeRoute> {
     routeResponse: jest.fn().mockResolvedValue(undefined),
   };
 
-  await instrumentPage(page, session as ChallengerRunSession, 'scrape-simple');
+  await instrumentPage(page, session as ChallengerRunSession);
   const route = makeFakeRoute();
   await routeHandler!(route);
   return route;
@@ -56,6 +61,7 @@ describe('installRequestInterception', () => {
     const context = { route: jest.fn().mockResolvedValue(undefined) };
     const page = { context: () => context } as unknown as Page;
     const session: Partial<ChallengerRunSession> = {
+      ctx: fakeCtx(),
       dispatch: jest.fn().mockResolvedValue({}),
       hasHandlers: () => false,
       hasRouteHandlers: () => false,
@@ -63,7 +69,7 @@ describe('installRequestInterception', () => {
       responseInterceptionApplies: () => false,
       routeResponse: jest.fn(),
     };
-    await instrumentPage(page, session as ChallengerRunSession, 'scrape-simple');
+    await instrumentPage(page, session as ChallengerRunSession);
     expect(context.route).not.toHaveBeenCalled();
   });
 
@@ -115,6 +121,7 @@ describe('installRequestInterception', () => {
     };
 
     const session: Partial<ChallengerRunSession> = {
+      ctx: fakeCtx(),
       dispatch: jest.fn().mockResolvedValue({}),
       hasHandlers: () => false,
       hasRouteHandlers: () => true,
@@ -127,7 +134,7 @@ describe('installRequestInterception', () => {
       }),
     };
 
-    await instrumentPage(page, session as ChallengerRunSession, 'scrape-simple');
+    await instrumentPage(page, session as ChallengerRunSession);
     const route = makeFakeRoute();
     route.fetch = jest.fn().mockResolvedValue(fetched);
     await routeHandler!(route);
