@@ -220,11 +220,13 @@ function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 }
 
-function scanModule(entry: ModuleEntry): ScannedModule | null {
+function scanModule(entry: ModuleEntry): ScannedModule {
   const srcDir = resolveModuleSrcDir(entry);
   if (!srcDir) {
-    console.warn(`Module '${entry.id}' not found at expected path, skipping.`);
-    return null;
+    console.error(
+      `Module '${entry.id}' (${entry.package}) not found at packages/${entry.package.replace('@tentacrawl/', '')}/src`,
+    );
+    process.exit(1);
   }
 
   const metadata = loadModuleMetadata(srcDir);
@@ -234,6 +236,7 @@ function scanModule(entry: ModuleEntry): ScannedModule | null {
     );
     process.exit(1);
   }
+  warnOnVersionDrift(entry, srcDir, metadata);
 
   const hasWorkerModule = fileExists(srcDir, 'worker', `${entry.id}.worker-module.ts`);
   const hasApiModule = fileExists(srcDir, 'api', `${entry.id}.api-module.ts`);
@@ -246,6 +249,21 @@ function scanModule(entry: ModuleEntry): ScannedModule | null {
 
 function fileExists(...segments: string[]): boolean {
   return fs.existsSync(path.join(...segments));
+}
+
+function warnOnVersionDrift(
+  entry: ModuleEntry,
+  srcDir: string,
+  metadata: ModuleInfo,
+): void {
+  const pkgPath = path.join(path.dirname(srcDir), 'package.json');
+  if (!fs.existsSync(pkgPath)) return;
+  const pkgVersion = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')).version;
+  if (typeof pkgVersion === 'string' && pkgVersion !== metadata.version) {
+    console.warn(
+      `Module '${entry.id}' version mismatch: package.json is ${pkgVersion}, metadata is ${metadata.version}`,
+    );
+  }
 }
 
 function validateDependencies(
@@ -391,11 +409,7 @@ export function main(): void {
   const entries = loadModulesConfig();
   const enabledIds = new Set(entries.map((e) => e.id));
 
-  const modules: ScannedModule[] = [];
-  for (const entry of entries) {
-    const scanned = scanModule(entry);
-    if (scanned) modules.push(scanned);
-  }
+  const modules = entries.map((entry) => scanModule(entry));
 
   validateDependencies(modules, enabledIds);
 
