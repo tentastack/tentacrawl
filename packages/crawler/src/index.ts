@@ -5,6 +5,7 @@ export const metadata: ModuleInfo = {
   title: 'Crawler',
   version: '0.1.0',
   description: 'Multi-page web crawler with depth/breadth control and URL filtering',
+  requires: ['challenger'],
   navigation: {
     label: 'Website Crawler',
     icon: 'Radar',
