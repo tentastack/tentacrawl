@@ -9,6 +9,7 @@ import type {
   ChallengerRuntimeContext,
   ChallengerSelectionDescriptor,
 } from '@tentacrawl/core';
+import { metadata } from '../index';
 import { proxyExtensionConfigSchema, type ProxyExtensionConfig } from '../data/schemas';
 import { ProxyManagerService } from './proxy-manager.service';
 
@@ -17,9 +18,9 @@ const USAGE_STATE_KEY = 'proxy:usageId';
 // reference ChallengerExtension; see docs/proxy-module-spec.md
 @Injectable()
 export class ProxyChallengerExtension implements ChallengerExtension, OnModuleInit {
-  readonly moduleId = 'proxy';
+  readonly moduleId = metadata.name;
   readonly extensionId = 'manual';
-  readonly version = '0.2.0';
+  readonly version = metadata.version;
   readonly priority = 10;
   readonly capabilities: ChallengerCapability[] = ['proxy'];
   readonly configSchema = proxyExtensionConfigSchema;
