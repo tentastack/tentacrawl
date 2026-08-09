@@ -189,7 +189,7 @@ export class ScrapeExecutorService {
 
     try {
       const page = await context.newPage();
-      await instrumentPage(page, session, 'scrape-simple');
+      await instrumentPage(page, session);
 
       const { response, aborted } = await navigateWithChallenger(
         page,
@@ -199,7 +199,6 @@ export class ScrapeExecutorService {
           waitUntil: payload.waitFor as 'load' | 'domcontentloaded' | 'networkidle',
         },
         session,
-        'scrape-simple',
       );
 
       if (aborted) {

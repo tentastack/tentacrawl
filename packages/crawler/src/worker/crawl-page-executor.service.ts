@@ -116,7 +116,7 @@ export class CrawlPageExecutorService {
 
       try {
         const page = await context.newPage();
-        await instrumentPage(page, session, 'crawl-page');
+        await instrumentPage(page, session);
 
         const { response, aborted } = await navigateWithChallenger(
           page,
@@ -126,7 +126,6 @@ export class CrawlPageExecutorService {
             waitUntil: payload.waitFor as 'load' | 'domcontentloaded' | 'networkidle',
           },
           session,
-          'crawl-page',
         );
         const finalUrl = normalizeDiscoveredUrl(page.url()) ?? normalizeDiscoveredUrl(url) ?? url;
 

@@ -21,9 +21,9 @@ export interface ChallengerNavigationResult {
 export async function instrumentPage(
   page: Page,
   session: ChallengerRunSession | undefined,
-  source: ChallengerSource,
 ): Promise<void> {
   if (!session) return;
+  const source = session.ctx.source;
 
   await session.dispatch('create-page', {
     source,
@@ -206,12 +206,13 @@ export async function navigateWithChallenger(
   url: string,
   options: { timeout?: number; waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' },
   session: ChallengerRunSession | undefined,
-  source: ChallengerSource,
+  sourceOverride?: ChallengerSource,
   step?: ChallengerStepInfo,
 ): Promise<ChallengerNavigationResult> {
   if (!session) {
     return { response: await page.goto(url, options) };
   }
+  const source = sourceOverride ?? session.ctx.source;
 
   const before = await session.dispatch('before-navigation', {
     source,
@@ -259,13 +260,13 @@ export async function navigateWithChallenger(
 export async function dispatchSessionSnapshot(
   page: Page,
   session: ChallengerRunSession | undefined,
-  source: ChallengerSource,
+  sourceOverride?: ChallengerSource,
 ): Promise<void> {
   if (!session?.hasHandlers('session-snapshot')) return;
   const snapshot = await captureSessionSnapshot(page);
   if (!snapshot) return;
   await session.dispatch('session-snapshot', {
-    source,
+    source: sourceOverride ?? session.ctx.source,
     raw: { page },
     session: snapshot,
   });
