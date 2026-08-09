@@ -149,4 +149,39 @@ describe('installRequestInterception', () => {
     );
     expect(route.continue).not.toHaveBeenCalled();
   });
+
+  it('reports an upstream fetch failure and still serves the request', async () => {
+    let routeHandler: ((route: FakeRoute) => Promise<void>) | undefined;
+    const context = {
+      route: jest.fn(async (_pattern: string, handler: (route: FakeRoute) => Promise<void>) => {
+        routeHandler = handler;
+      }),
+    };
+    const page = { context: () => context } as unknown as Page;
+
+    const diagnostic = jest.fn();
+    const session: Partial<ChallengerRunSession> = {
+      ctx: fakeCtx(),
+      diagnostic,
+      dispatch: jest.fn().mockResolvedValue({}),
+      hasHandlers: () => false,
+      hasRouteHandlers: () => true,
+      routeRequest: jest.fn().mockResolvedValue({ action: 'continue' }),
+      responseInterceptionApplies: () => true,
+      routeResponse: jest.fn(),
+    };
+
+    await instrumentPage(page, session as ChallengerRunSession);
+    const route = makeFakeRoute();
+    route.fetch = jest.fn().mockRejectedValue(new Error('tunnel failed'));
+    await routeHandler!(route);
+
+    expect(diagnostic).toHaveBeenCalledWith(
+      'route.fetch',
+      'https://example.com/api',
+      expect.any(Error),
+    );
+    expect(route.continue).toHaveBeenCalled();
+    expect(session.routeResponse).not.toHaveBeenCalled();
+  });
 });

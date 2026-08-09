@@ -131,6 +131,11 @@ export class ChallengerRunSessionImpl implements ChallengerRunSession {
     }
   }
 
+  diagnostic(scope: string, message: string, error?: unknown): void {
+    const detail = error === undefined ? '' : `: ${messageOf(error)}`;
+    this.logger.warn(`[${scope}] task=${this.seed.taskId} ${message}${detail}`);
+  }
+
   hasHandlers(stage: ChallengerStage): boolean {
     return this.extensions.some(
       (e) =>
