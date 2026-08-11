@@ -1,14 +1,19 @@
 {
   "name": "@tentacrawl/proxy",
-  "version": "0.2.0",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
-      "data/entities": ["dist/data/entities.d.ts"],
-      "data/schemas": ["dist/data/schemas.d.ts"],
-      "frontend": ["src/frontend/index.ts"]
+      "data/entities": [
+        "dist/data/entities.d.ts"
+      ],
+      "data/schemas": [
+        "dist/data/schemas.d.ts"
+      ],
+      "frontend": [
+        "src/frontend/index.ts"
+      ]
     }
   },
   "exports": {

@@ -3,7 +3,6 @@ import type { ModuleInfo } from '@tentacrawl/core';
 export const metadata: ModuleInfo = {
   name: 'admin',
   title: 'Admin Monitoring',
-  version: '0.1.0',
   description: 'Dashboard, worker presence, and operational activity tracking',
   navigation: {
     label: 'Dashboard',

@@ -3,7 +3,6 @@ import type { ModuleInfo } from '@tentacrawl/core';
 export const metadata: ModuleInfo = {
   name: 'proxy',
   title: 'Proxy Management',
-  version: '0.2.0',
   description: 'Manually defined proxy servers with shared credentials, endpoint rotation, and usage tracking',
   requires: ['challenger'],
   navigation: {

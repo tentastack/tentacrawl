@@ -3,7 +3,6 @@ import type { ModuleInfo } from '@tentacrawl/core';
 export const metadata: ModuleInfo = {
   name: 'crawler',
   title: 'Crawler',
-  version: '0.1.0',
   description: 'Multi-page web crawler with depth/breadth control and URL filtering',
   requires: ['challenger'],
   navigation: {

@@ -3,7 +3,6 @@ import type { ModuleInfo } from '@tentacrawl/core';
 export const metadata: ModuleInfo = {
   name: 'scraper',
   title: 'Scraper',
-  version: '0.1.0',
   description: 'Single-page scraping with configurable artefact formats',
   requires: ['challenger'],
   navigation: {
