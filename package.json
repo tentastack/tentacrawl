@@ -1,6 +1,6 @@
 {
   "name": "tentacrawl",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "private": true,
   "description": "Generic web scraping platform with DSL-driven browser automation",
