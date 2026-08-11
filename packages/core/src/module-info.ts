@@ -14,10 +14,11 @@ export interface ModuleRoute {
   title: string;
 }
 
+// statically parsed by @tentacrawl/cli, so every field must be a literal;
+// the module version is not one of them, it is read from package.json at runtime
 export interface ModuleInfo {
   name: string;
   title: string;
-  version: string;
   description: string;
   requires?: string[];
   optional?: string[];

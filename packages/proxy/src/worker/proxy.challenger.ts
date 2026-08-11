@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ChallengerRegistry, challengerExtensionKey } from '@tentacrawl/core';
+import { readPackageVersion } from '@tentacrawl/core/module-version';
 import type {
   ChallengerBootstrapContext,
   ChallengerCapability,
@@ -20,7 +21,7 @@ const USAGE_STATE_KEY = 'proxy:usageId';
 export class ProxyChallengerExtension implements ChallengerExtension, OnModuleInit {
   readonly moduleId = metadata.name;
   readonly extensionId = 'manual';
-  readonly version = metadata.version;
+  readonly version = readPackageVersion(__dirname);
   readonly priority = 10;
   readonly capabilities: ChallengerCapability[] = ['proxy'];
   readonly configSchema = proxyExtensionConfigSchema;

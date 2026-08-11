@@ -158,7 +158,6 @@ function normalizeMetadata(raw: Record<string, unknown>): ModuleInfo | null {
   const info: ModuleInfo = {
     name,
     title,
-    version: asString(raw.version) ?? '0.0.0',
     description: asString(raw.description) ?? '',
     requires: asStringArray(raw.requires),
     optional: asStringArray(raw.optional),
@@ -236,8 +235,6 @@ function scanModule(entry: ModuleEntry): ScannedModule {
     );
     process.exit(1);
   }
-  warnOnVersionDrift(entry, srcDir, metadata);
-
   const hasWorkerModule = fileExists(srcDir, 'worker', `${entry.id}.worker-module.ts`);
   const hasApiModule = fileExists(srcDir, 'api', `${entry.id}.api-module.ts`);
   const hasEntities = fileExists(srcDir, 'data', 'entities.ts');
@@ -249,21 +246,6 @@ function scanModule(entry: ModuleEntry): ScannedModule {
 
 function fileExists(...segments: string[]): boolean {
   return fs.existsSync(path.join(...segments));
-}
-
-function warnOnVersionDrift(
-  entry: ModuleEntry,
-  srcDir: string,
-  metadata: ModuleInfo,
-): void {
-  const pkgPath = path.join(path.dirname(srcDir), 'package.json');
-  if (!fs.existsSync(pkgPath)) return;
-  const pkgVersion = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')).version;
-  if (typeof pkgVersion === 'string' && pkgVersion !== metadata.version) {
-    console.warn(
-      `Module '${entry.id}' version mismatch: package.json is ${pkgVersion}, metadata is ${metadata.version}`,
-    );
-  }
 }
 
 function validateDependencies(

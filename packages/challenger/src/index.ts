@@ -3,7 +3,6 @@ import type { ModuleInfo } from '@tentacrawl/core';
 export const metadata: ModuleInfo = {
   name: 'challenger',
   title: 'Challenger Extensions',
-  version: '0.1.0',
   description: 'Challenger extension framework host: dispatch, signals, admin dashboard',
   navigation: {
     label: 'Extensions',

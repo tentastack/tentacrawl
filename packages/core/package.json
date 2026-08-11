@@ -1,19 +1,37 @@
 {
   "name": "@tentacrawl/core",
-  "version": "0.1.0",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
-      "activity": ["dist/activity/index.d.ts"],
-      "entity": ["dist/entity/index.d.ts"],
-      "notification": ["dist/notification/index.d.ts"],
-      "schema": ["dist/schema/index.d.ts"],
-      "url": ["dist/url.d.ts"],
-      "dsl-actions": ["dist/dsl-actions.d.ts"],
-      "logger": ["dist/logger.d.ts"],
-      "module-info": ["src/module-info.ts"]
+      "activity": [
+        "dist/activity/index.d.ts"
+      ],
+      "entity": [
+        "dist/entity/index.d.ts"
+      ],
+      "notification": [
+        "dist/notification/index.d.ts"
+      ],
+      "schema": [
+        "dist/schema/index.d.ts"
+      ],
+      "url": [
+        "dist/url.d.ts"
+      ],
+      "dsl-actions": [
+        "dist/dsl-actions.d.ts"
+      ],
+      "logger": [
+        "dist/logger.d.ts"
+      ],
+      "module-info": [
+        "src/module-info.ts"
+      ],
+      "module-version": [
+        "dist/module-version.d.ts"
+      ]
     }
   },
   "exports": {
@@ -25,7 +43,8 @@
     "./url": "./dist/url.js",
     "./dsl-actions": "./dist/dsl-actions.js",
     "./logger": "./dist/logger.js",
-    "./module-info": "./src/module-info.ts"
+    "./module-info": "./src/module-info.ts",
+    "./module-version": "./dist/module-version.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
