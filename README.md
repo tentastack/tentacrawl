@@ -1,5 +1,8 @@
 # Tentacrawl
 
+[![CI](https://github.com/tentastack/tentacrawl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tentastack/tentacrawl/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/tentastack/tentacrawl?sort=semver)](https://github.com/tentastack/tentacrawl/releases)
+
 Tentacrawl turns modern, browser-rendered websites into clean, reusable data for automation, search, analytics, and AI pipelines. Run it on your own infrastructure for full control, or use it behind a managed browser fleet when execution is the hard part.
 
 It is built for teams that need to capture content from dynamic websites, monitor changes over time, and move that data into internal tools, knowledge bases, and LLM workflows.
