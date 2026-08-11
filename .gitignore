@@ -32,7 +32,6 @@ coverage/
 secrets.yaml
 *-secret.yaml
 local-values.yaml
-.github/
 
 # Logs and runtime output
 logs/
