@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/mongodb';
+import { readPackageVersion } from '@tentacrawl/core/module-version';
 import { ConfigService } from '@nestjs/config';
 import type { WorkerSnapshot } from '../data/schemas';
 import * as os from 'node:os';
@@ -13,7 +14,7 @@ export class WorkerPresenceService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WorkerPresenceService.name);
   private readonly hostname = os.hostname();
   private readonly pid = process.pid;
-  private readonly version = process.env['npm_package_version'] ?? '0.1.0';
+  private readonly version = readPackageVersion(__dirname);
   private readonly startedAt = new Date();
   private readonly config;
   private readonly port: number;
