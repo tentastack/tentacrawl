@@ -13,6 +13,7 @@
     "dev:deps:down": "docker compose down",
     "dev:deps:logs": "docker compose logs -f",
     "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
     "dev:api": "node scripts/dev.mjs --no-deps --service=api",
     "dev:worker": "node scripts/dev.mjs --no-deps --service=worker",

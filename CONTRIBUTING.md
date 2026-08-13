@@ -18,6 +18,7 @@ Common checks:
 
 ```bash
 pnpm lint
+pnpm typecheck
 pnpm test
 pnpm build
 ```
