@@ -1,0 +1,238 @@
+:root {
+  --ifm-color-primary: #ff4f00;
+  --ifm-color-primary-dark: hsl(19, 100%, 44%);
+  --ifm-color-primary-darker: hsl(19, 100%, 41%);
+  --ifm-color-primary-darkest: hsl(19, 100%, 34%);
+  --ifm-color-primary-light: hsl(19, 100%, 56%);
+  --ifm-color-primary-lighter: hsl(19, 100%, 60%);
+  --ifm-color-primary-lightest: hsl(19, 100%, 68%);
+  --ifm-color-primary-contrast-foreground: #ffffff;
+  /* RGB channels of --ifm-color-primary (#ff4f00), for rgba() alpha blends.
+     Keep in sync with --ifm-color-primary above. */
+  --tc-primary-rgb: 255, 79, 0;
+
+  --tc-ink: #000000;
+  --tc-surface: #ffffff;
+  --tc-base: #fafafa;
+  --tc-muted: #6b7280;
+  --tc-shadow-color: #000000;
+  /* tentacrawl.com reserves the solid 2px border for rare, singular
+     elements (cards, CTAs); dense/repeated elements like tags use a
+     1px border at ~20% opacity instead. Tables, code blocks,
+     admonitions, and dividers belong in the second category. */
+  --tc-border-subtle: rgba(0, 0, 0, 0.15);
+
+  --ifm-background-color: var(--tc-base);
+  --ifm-font-color-base: var(--tc-ink);
+  --ifm-heading-color: var(--tc-ink);
+  --ifm-color-emphasis-600: var(--tc-muted);
+  --ifm-color-content-secondary: var(--tc-muted);
+
+  --ifm-font-family-base: 'Inter', 'Inter Fallback', system-ui, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace;
+  --ifm-heading-font-weight: 800;
+  --ifm-font-weight-bold: 700;
+  --ifm-code-font-size: 90%;
+
+  --ifm-global-radius: 0;
+  --ifm-button-border-radius: 0;
+  --ifm-card-border-radius: 0;
+  --ifm-alert-border-radius: 0;
+  --ifm-code-border-radius: 0;
+  --ifm-pre-border-radius: 0;
+  --ifm-badge-border-radius: 0;
+  --ifm-pagination-border-radius: 0;
+  --ifm-pagination-nav-border-radius: 0;
+  --ifm-breadcrumb-border-radius: 0;
+
+  --ifm-global-border-width: 2px;
+  --ifm-hr-border-color: var(--tc-border-subtle);
+  --ifm-toc-border-color: var(--tc-border-subtle);
+
+  --tc-shadow: 4px 4px 0 0 var(--tc-shadow-color);
+  --tc-shadow-sm: 2px 2px 0 0 var(--tc-shadow-color);
+  --ifm-global-shadow-lw: var(--tc-shadow-sm);
+  --ifm-global-shadow-md: var(--tc-shadow);
+  --ifm-global-shadow-tl: var(--tc-shadow);
+
+  --ifm-navbar-background-color: rgba(250, 250, 250, 0.9);
+  --ifm-navbar-shadow: none;
+  --ifm-navbar-border-color: var(--tc-border-subtle);
+
+  --ifm-card-background-color: var(--tc-surface);
+  --ifm-footer-background-color: var(--tc-surface);
+  --ifm-footer-color: var(--tc-muted);
+  --ifm-footer-title-color: var(--tc-ink);
+  --ifm-footer-link-color: var(--tc-muted);
+  --ifm-footer-link-hover-color: var(--ifm-color-primary);
+
+  --ifm-menu-color-background-active: rgba(var(--tc-primary-rgb), 0.08);
+  --docusaurus-highlighted-code-line-bg: rgba(var(--tc-primary-rgb), 0.1);
+
+  --ifm-global-spacing: 1.25rem;
+}
+
+[data-theme='dark'] {
+  --tc-ink: #f2f2f0;
+  --tc-surface: #1c1c1c;
+  --tc-base: #141414;
+  --tc-muted: #a3a3a3;
+  /* Solid black reads as a shadow against the light page; on a dark page
+     the same trick needs a color that contrasts with the surface instead,
+     so dark mode casts the brand color rather than black. */
+  --tc-shadow-color: var(--ifm-color-primary);
+  --tc-border-subtle: rgba(255, 255, 255, 0.16);
+
+  --ifm-navbar-background-color: rgba(20, 20, 20, 0.9);
+  --ifm-menu-color-background-active: rgba(var(--tc-primary-rgb), 0.12);
+  --ifm-hover-overlay: rgba(255, 255, 255, 0.06);
+
+  --docusaurus-highlighted-code-line-bg: rgba(var(--tc-primary-rgb), 0.15);
+}
+
+body {
+  background-color: var(--tc-base);
+  background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.025) 1px, transparent 1px),
+    linear-gradient(rgba(0, 0, 0, 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+[data-theme='dark'] body {
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+main .container {
+  padding-top: 1.5rem;
+}
+
+.markdown h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.markdown h2 {
+  font-size: 1.85rem;
+  letter-spacing: -0.02em;
+  border-left: 4px solid var(--ifm-color-primary);
+  padding-left: 0.75rem;
+}
+
+.markdown p {
+  line-height: 1.7;
+}
+
+code {
+  border: none;
+  background: none;
+  color: var(--ifm-color-primary);
+  padding: 0;
+}
+
+pre code {
+  color: inherit;
+}
+
+div[class*='codeBlockContainer'] {
+  border: 1px solid var(--tc-border-subtle);
+  box-shadow: none;
+}
+
+table {
+  border: 1px solid var(--tc-border-subtle);
+  background-color: var(--tc-surface);
+  display: table;
+}
+
+table th,
+table td {
+  border: 1px solid var(--tc-border-subtle);
+  background-color: transparent;
+}
+
+table thead tr {
+  background-color: var(--tc-base);
+  border-bottom: 1px solid var(--tc-border-subtle);
+}
+
+table tbody tr:nth-child(even) {
+  background-color: var(--tc-base);
+}
+
+.navbar {
+  border-bottom: 1px solid var(--ifm-navbar-border-color);
+  backdrop-filter: blur(8px);
+}
+
+.navbar__title {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.navbar__link--active {
+  font-weight: 700;
+}
+
+.theme-doc-sidebar-container {
+  background-color: var(--tc-base);
+  border-right: 1px solid var(--tc-border-subtle) !important;
+}
+
+.theme-doc-sidebar-menu {
+  padding: 0.5rem;
+}
+
+.menu__link {
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+  border-left-color: var(--ifm-color-primary);
+  font-weight: 700;
+}
+
+/* tentacrawl.com's exact CTA button transition: 0.15s, Tailwind's default ease curve. */
+.button,
+.pagination-nav__link {
+  border: var(--ifm-global-border-width) solid var(--tc-ink);
+  box-shadow: var(--tc-shadow);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.button {
+  font-weight: 700;
+}
+
+.button:hover,
+.pagination-nav__link:hover {
+  transform: translate(2px, 2px);
+  box-shadow: var(--tc-shadow-sm);
+}
+
+.button.button--secondary {
+  background-color: var(--tc-surface);
+  color: var(--tc-ink);
+}
+
+.card {
+  border: var(--ifm-global-border-width) solid var(--tc-ink);
+  box-shadow: var(--tc-shadow);
+}
+
+.alert {
+  border: 1px solid var(--tc-border-subtle);
+  box-shadow: none;
+}
+
+.footer {
+  border-top: 1px solid var(--tc-border-subtle);
+}
+
+.footer--dark {
+  --ifm-footer-background-color: var(--tc-surface);
+}

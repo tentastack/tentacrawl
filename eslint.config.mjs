@@ -21,10 +21,14 @@ const ignores = [
   '**/generated/**',
   '**/*.d.ts',
   'apps/web/next-env.d.ts',
+  '.docusaurus/**',
+  '**/.docusaurus/**',
+  'apps/docs/build/**',
 ];
 
 const frontendFiles = [
   'apps/web/**/*.{js,mjs,cjs,ts,tsx}',
+  'apps/docs/**/*.{js,mjs,cjs,ts,tsx}',
   'packages/*/src/frontend/**/*.{js,mjs,cjs,ts,tsx}',
   'packages/ui/src/**/*.{js,mjs,cjs,ts,tsx}',
 ];

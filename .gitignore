@@ -24,6 +24,13 @@ coverage/
 .pnpm-store/
 .turbo/
 
+# Docusaurus
+.docusaurus/
+apps/docs/build/
+
+# Vercel
+.vercel/
+
 # Environment and secrets
 .env
 .env.*

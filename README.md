@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/tentastack/tentacrawl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tentastack/tentacrawl/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/tentastack/tentacrawl?sort=semver)](https://github.com/tentastack/tentacrawl/releases)
+[![Docs](https://img.shields.io/badge/docs-docs.tentacrawl.com-ff4f00)](https://docs.tentacrawl.com)
 
 Tentacrawl turns modern, browser-rendered websites into clean, reusable data for automation, search, analytics, and AI pipelines. Run it on your own infrastructure for full control, or use it behind a managed browser fleet when execution is the hard part.
 
@@ -86,6 +87,7 @@ apps/
   api/       NestJS API app
   worker/    NestJS worker app
   web/       Next.js admin app
+  docs/      Docusaurus documentation site
 
 packages/
   admin/         dashboard and worker presence module

@@ -1,0 +1,26 @@
+---
+title: Introduction
+slug: /
+description: What Tentacrawl is, how it is organized, and where to go next.
+hide_title: true
+---
+
+import Hero from '@site/src/components/Hero';
+
+<Hero />
+
+It is a pnpm monorepo with three applications (`apps/api`, `apps/worker`, `apps/web`) built around a YAML DSL for browser flows and Playwright-driven execution.
+
+## The core idea
+
+Site-specific adaptation — proxy rotation, captcha handling, fingerprinting, login, user-behavior mimicry — cannot live in the core scraping engine, because every site needs something different. Tentacrawl solves this with the **Challenger framework**: a single, contract-based extension surface that lets a module observe and mutate every stage of a run (navigation, requests and responses, session state, artifacts, DSL steps) without editing core code. `packages/proxy` is the reference implementation; everything else you might want to build — a captcha solver, a fingerprint rotator, a login flow — follows the same contract.
+
+## Where to go next
+
+- **[Getting Started](/getting-started/installation)** — install the platform and run your first scrape.
+- **[Guides](/guides/overview)** — task-oriented instructions for operating a deployment.
+- **[Extending Tentacrawl](/extending/overview)** — write a Challenger extension.
+- **[Architecture](/architecture/system-overview)** — how the pieces fit together and why.
+- **[Reference](/reference/environment-variables)** — environment variables, the HTTP API, the Challenger contract, the DSL grammar.
+
+The full setup and command reference also lives in the repository [README](https://github.com/tentastack/tentacrawl#readme); these docs go deeper on the parts the README only summarizes.
