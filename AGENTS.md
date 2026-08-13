@@ -289,6 +289,8 @@ packages/<module>/src/
 - Keep `README.md` and this file aligned with the real repository structure.
 - Document behavior changes when they affect setup, module generation, or runtime flow.
 - Keep markdown concise and ASCII-only.
+- `apps/docs` (Docusaurus, deployed separately from this repo) is user- and extension-author-facing documentation, distinct from this file and `README.md`. Update the relevant page under `apps/docs/docs/` whenever a change affects a documented environment variable, the `ChallengerExtension`/`ChallengerRegistrar` contract, a DSL action, or a REST endpoint.
+- Cross-references from `apps/docs` into this file (e.g. a section number) are not build-checked — grep `apps/docs/docs/` for stale references whenever a section here is renumbered.
 
 ## 15. Security and Compliance
 

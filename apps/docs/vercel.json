@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "pnpm install --frozen-lockfile --filter @tentacrawl/docs...",
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "build"
+}

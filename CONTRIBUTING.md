@@ -18,6 +18,7 @@ Common checks:
 
 ```bash
 pnpm lint
+pnpm typecheck
 pnpm test
 pnpm build
 ```
@@ -31,6 +32,7 @@ For app-local or package-local changes, prefer targeted commands first.
 - Run `pnpm generate` after changing `modules.config.ts` or module metadata.
 - Validate runtime-facing inputs with shared Zod schemas where appropriate.
 - Prefer extending existing modules and shared packages over introducing parallel patterns.
+- Update the relevant page under `apps/docs/docs/` when a change affects a documented environment variable, the Challenger contract, a DSL action, or a REST endpoint (see AGENTS.md section 14).
 
 ## Continuous Integration
 
@@ -89,6 +91,7 @@ as the pull request titles they are generated from.
 - Call out any generated files included in the diff.
 - Mention the validation commands you ran.
 - Include screenshots for UI changes when they materially affect the admin surface.
+- Note whether `apps/docs` needed an update for this change, and include it in the same pull request if so.
 
 ## Local Files
 
