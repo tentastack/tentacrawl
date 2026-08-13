@@ -1,15 +1,55 @@
 ---
-title: Introduction
+title: Open Source Web Scraping & Crawling Platform
 slug: /
-description: What Tentacrawl is, how it is organized, and where to go next.
+description: 'Tentacrawl: an open source platform for scraping and crawling JavaScript-rendered websites, with proxy rotation, captcha solving, and anti-bot evasion.'
+keywords:
+  - web scraping
+  - web crawler
+  - open source web scraper
+  - open source web crawler
+  - playwright scraping
+  - browser automation
+  - proxy rotation
+  - captcha solving
+  - anti-bot bypass
+  - LLM data pipeline
 hide_title: true
 ---
 
+import Head from '@docusaurus/Head';
 import Hero from '@site/src/components/Hero';
+
+<Head>
+  <script type="application/ld+json">
+    {`{
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Tentacrawl",
+      "description": "Open source platform for scraping and crawling JavaScript-rendered websites, with proxy rotation, captcha solving, and anti-bot evasion through the Challenger extension framework.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Linux, macOS, Windows",
+      "url": "https://docs.tentacrawl.com",
+      "sameAs": "https://github.com/tentastack/tentacrawl",
+      "license": "https://github.com/tentastack/tentacrawl/blob/main/LICENSE",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }`}
+  </script>
+</Head>
 
 <Hero />
 
-It is a pnpm monorepo with three applications (`apps/api`, `apps/worker`, `apps/web`) built around a YAML DSL for browser flows and Playwright-driven execution.
+## What it's for
+
+- **Structured data extraction** — turn any page into Markdown, JSON, HTML, metadata, or a screenshot.
+- **AI and LLM pipelines** — Markdown and metadata artefacts are ready for RAG ingestion and knowledge bases without extra cleanup.
+- **Monitoring and change detection** — recurring crawls with discovered-link tracking across a site.
+- **Anti-bot and WAF-protected sites** — proxy rotation, captcha solving, fingerprinting, and login all plug in through the Challenger framework, with no changes to core code.
+
+Tentacrawl scrapes and crawls **JavaScript-rendered websites** with real browser automation (Playwright), not a static HTTP fetch — pages that need a login, infinite scroll, or client-side rendering work the same as pages that don't. It is a pnpm monorepo with three applications (`apps/api`, `apps/worker`, `apps/web`) built around a YAML DSL for scripted browser flows.
 
 ## The core idea
 

@@ -15,9 +15,10 @@ export default function Hero() {
         <span className={styles.titleAccent}>Feed your AI.</span>
       </h1>
       <p className={styles.lead}>
-        Tentacrawl turns modern, browser-rendered websites into clean, reusable data. Site-specific adaptation —
-        proxies, captchas, fingerprinting, login — plugs in through the Challenger framework, without touching core
-        code.
+        Tentacrawl scrapes and crawls modern, JavaScript-rendered websites into clean, structured data — Markdown,
+        JSON, HTML, and screenshots ready for RAG pipelines, automation, and analytics. Site-specific adaptation —
+        proxy rotation, captcha solving, fingerprinting, login — plugs in through the open source Challenger
+        extension framework, without touching core code.
       </p>
       <div className={styles.actions}>
         <Link className="button button--primary button--lg" to="/getting-started/installation">

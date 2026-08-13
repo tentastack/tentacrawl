@@ -8,7 +8,8 @@ const repoUrl = `https://github.com/${organizationName}/${projectName}`;
 
 const config: Config = {
   title: 'Tentacrawl',
-  tagline: 'A DSL-driven web scraping and crawling platform, extensible through the Challenger framework.',
+  tagline:
+    'An open source platform for scraping and crawling JavaScript-rendered websites — proxy rotation, captcha solving, and anti-bot evasion built in, and fully extensible through the Challenger framework.',
   favicon: 'img/favicon.svg',
 
   url: 'https://docs.tentacrawl.com',
@@ -63,6 +64,13 @@ const config: Config = {
   themeConfig: {
     // TODO: add a static/img/social-card.png (1200x630) and set `image` here
     // once real branding exists, so shared links get an OpenGraph preview.
+    metadata: [
+      {
+        name: 'keywords',
+        content:
+          'web scraping, web crawler, open source web scraper, open source web crawler, playwright scraping, browser automation, proxy rotation, captcha solving, anti-bot bypass, structured data extraction, LLM data pipeline, RAG data extraction',
+      },
+    ],
     colorMode: {
       defaultMode: 'light',
       respectPrefersColorScheme: true,

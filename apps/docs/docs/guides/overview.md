@@ -1,7 +1,7 @@
 ---
 title: Overview
 sidebar_position: 1
-description: What's in this section.
+description: Task-oriented instructions for configuring proxies, managing Challenger extensions, writing DSL flows, and deploying Tentacrawl with Docker.
 ---
 
 # Guides
