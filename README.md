@@ -17,7 +17,7 @@ The platform exports browser runs into reusable artefacts, including:
 - screenshots for visual verification and debugging
 - discovered links for site exploration, crawling, and follow-up extraction
 
-![Tentacrawl crawl detail view](docs/screenshots/crawl-detail.png)
+![Tentacrawl crawl detail view](apps/docs/static/img/screenshots/readme-crawl-detail.png)
 
 ## Architecture
 
