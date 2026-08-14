@@ -5,10 +5,6 @@ export default function Hero() {
   return (
     <div className={styles.hero}>
       <div className={styles.glow} />
-      <span className={styles.badge}>
-        <span className={styles.dot} />
-        Open Source Docs
-      </span>
       <h1 className={styles.title}>
         Scrape the web.
         <br />

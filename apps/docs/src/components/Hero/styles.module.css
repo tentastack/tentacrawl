@@ -17,40 +17,6 @@
   pointer-events: none;
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid rgba(var(--tc-primary-rgb), 0.3);
-  background: rgba(var(--tc-primary-rgb), 0.1);
-  color: var(--ifm-color-primary);
-  font-family: var(--ifm-font-family-monospace);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 9999px;
-  background: var(--ifm-color-primary);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
-
 .title {
   font-size: clamp(2.5rem, 6vw, 4.5rem);
   font-weight: 800;
