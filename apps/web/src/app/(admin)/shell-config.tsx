@@ -15,9 +15,8 @@ import {
 const dashboardBrand: AppShellBrand = {
   href: '/',
   mark: (
-    <div className="w-6 h-6 bg-brand text-white flex items-center justify-center font-bold font-mono text-sm leading-none border border-ink">
-      T
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/logo.png" alt="" className="w-8 h-8 object-contain" />
   ),
   name: 'Tentacrawl.',
   badge: 'Admin',

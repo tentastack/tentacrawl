@@ -10,7 +10,7 @@ const config: Config = {
   title: 'Tentacrawl',
   tagline:
     'An open source platform for scraping and crawling JavaScript-rendered websites — proxy rotation, captcha solving, and anti-bot evasion built in, and fully extensible through the Challenger framework.',
-  favicon: 'img/favicon.svg',
+  favicon: 'img/favicon.png',
 
   url: 'https://docs.tentacrawl.com',
   baseUrl: '/',
@@ -79,7 +79,7 @@ const config: Config = {
       title: 'Tentacrawl.',
       logo: {
         alt: 'Tentacrawl logo',
-        src: 'img/logo.svg',
+        src: 'img/logo.png',
       },
       items: [
         {
