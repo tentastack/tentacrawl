@@ -70,6 +70,10 @@
   --docusaurus-highlighted-code-line-bg: rgba(var(--tc-primary-rgb), 0.1);
 
   --ifm-global-spacing: 1.25rem;
+
+  /* Keep the pagination nav border black on hover, matching the CTA buttons'
+     neubrutalist hover (shadow + translate only, no border color change). */
+  --ifm-pagination-nav-color-hover: var(--tc-ink);
 }
 
 [data-theme='dark'] {
@@ -214,6 +218,10 @@ table tbody tr:nth-child(even) {
 
 .button {
   font-weight: 700;
+}
+
+.pagination-nav__link {
+  background-color: var(--tc-surface);
 }
 
 .button:hover,
