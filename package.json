@@ -3,7 +3,31 @@
   "version": "0.2.0",
   "license": "MIT",
   "private": true,
-  "description": "Generic web scraping platform with DSL-driven browser automation",
+  "description": "Open source platform for scraping and crawling JavaScript-rendered websites, with proxy rotation, captcha solving, and anti-bot evasion via the Challenger extension framework.",
+  "keywords": [
+    "web-scraping",
+    "web-crawler",
+    "scraper",
+    "crawler",
+    "playwright",
+    "browser-automation",
+    "proxy-rotation",
+    "anti-bot",
+    "data-extraction",
+    "llm",
+    "rag",
+    "dsl",
+    "open-source",
+    "self-hosted"
+  ],
+  "homepage": "https://docs.tentacrawl.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tentastack/tentacrawl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tentastack/tentacrawl/issues"
+  },
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "dev:apps": "node scripts/dev.mjs --no-deps",
