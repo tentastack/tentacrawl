@@ -50,18 +50,18 @@ target websites -> extracted artefacts
 
 The main architectural advantage is modularity. Tentacrawl is designed so users can enable only the capabilities they need, extend the platform without rewriting the core runtime, and keep feature-specific logic isolated from the shared scraping, crawling, browser, and infrastructure layers.
 
-Each feature module lives in its own package and plugs into the platform through explicit metadata, shared schemas, and generated registries. A module can contribute several surfaces at once:
+Each feature module plugs into the platform through explicit metadata, shared schemas, and generated registries. A module can contribute several surfaces at once:
 
 - API endpoints for configuration and operations
 - worker services and subscribers for queue-driven execution
 - frontend pages, components, and hooks for the admin UI
 - data entities and schemas that define its runtime contract
 
-In practice, each module is a self-contained package under `packages/<module>` with its own metadata, schemas, runtime logic, and optional frontend surface. The workspace generator assembles enabled modules into the API, worker, and web applications from `modules.config.ts`, which keeps the system extensible without turning the monorepo into a patchwork of hard-coded feature switches.
+In practice, each module is a self-contained package with its own metadata, schemas, runtime logic, and optional frontend surface. The workspace generator assembles enabled modules into the API, worker, and web applications from `modules.config.ts`, which keeps the system extensible without turning the monorepo into a patchwork of hard-coded feature switches. A module's `package` entry resolves like any other Node dependency, so it works identically whether it lives in this workspace under `packages/<module>` or is installed from npm, a git URL, or a local link — see [Module System](https://docs.tentacrawl.com/architecture/module-system).
 
 ## Current Modules
 
-Enabled modules are declared in `modules.config.ts` and currently include:
+Core modules ship with the platform and are enabled by default in `modules.config.ts`:
 
 | Module | Purpose | UI Surface |
 | --- | --- | --- |
@@ -69,8 +69,31 @@ Enabled modules are declared in `modules.config.ts` and currently include:
 | `challenger` | extension framework host: dispatch, signals, and the extensions admin dashboard | `/extensions` |
 | `crawler` | multi-page crawling with depth, breadth, and URL filtering controls | `/crawl/*` |
 | `notification` | lifecycle notifications for scrape, crawl, and future module events | notification center |
-| `proxy` | manually defined proxy servers with endpoint rotation and usage tracking; reference challenger extension | full module |
 | `scraper` | single-page scraping with configurable artefact formats | `/scrape/*` |
+
+**Challenger extensions are installed on demand.** Site- and vendor-specific
+adaptation — proxy providers, captcha solvers, fingerprint rotators, login
+flows — lives in external packages rather than the core, so a deployment
+carries only the integrations it actually uses. Install one, enable it,
+regenerate:
+
+```bash
+pnpm add -w @tentacrawl/proxy
+```
+
+```ts
+// modules.config.ts
+{ id: 'proxy', package: '@tentacrawl/proxy' },
+```
+
+```bash
+pnpm generate
+```
+
+The [module registry](https://docs.tentacrawl.com/extending/module-registry)
+lists official and team-verified extensions, and
+[Extending Tentacrawl](https://docs.tentacrawl.com/extending/overview) covers
+writing your own.
 
 Foundational packages used by those modules:
 
@@ -98,10 +121,14 @@ packages/
   crawler/       recursive crawl module
   dsl/           YAML DSL compiler and validation
   notification/  notification module
-  proxy/         proxy management module
   scraper/       single-page scrape module
   ui/            shared frontend library
 ```
+
+Challenger extensions are not in this tree — they're external packages you
+install. See [Current Modules](#current-modules) and
+[tentastack/tentacrawl-modules](https://github.com/tentastack/tentacrawl-modules),
+where the official ones are maintained.
 
 ## Generated Code
 

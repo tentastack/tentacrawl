@@ -6,12 +6,12 @@ description: How to set up, validate, and submit changes to Tentacrawl.
 
 # Contributing
 
-Tentacrawl follows a deliberate set of conventions so that human and AI contributors alike can work in the codebase predictably. The authoritative sources are two files at the repository root:
+Tentacrawl's conventions live in two files at the repository root:
 
 - **[CONTRIBUTING.md](https://github.com/tentastack/tentacrawl/blob/main/CONTRIBUTING.md)** — setup, local validation, commit and pull request conventions, and how releases work.
 - **[AGENTS.md](https://github.com/tentastack/tentacrawl/blob/main/AGENTS.md)** — the working conventions for the codebase itself: module layout, naming, type safety, testing, and code style.
 
-This page is intentionally short and does not duplicate them; read those two files first.
+Read those two files first.
 
 ## The short version
 

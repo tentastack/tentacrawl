@@ -31,7 +31,7 @@ finalizeRun: dispatch('run-outcome') -> session.end(outcome)
    -> extension.afterRun() / onError()
 ```
 
-Listeners are attached only when a handler actually exists for that stage (`session.hasHandlers(...)`), so an unused stage costs nothing.
+Listeners are attached only when a handler actually exists for that stage (`session.hasHandlers(...)`).
 
 ## Ordering and isolation
 

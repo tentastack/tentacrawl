@@ -35,7 +35,7 @@ r.interceptResponse(async (ctx) => {
 
 ## Always filter
 
-This seam sees *every* request on the page. Always constrain `routePatterns` and/or `resourceTypes` — an unfiltered handler is a real performance cost, not just a correctness one.
+This seam sees *every* request on the page. Always constrain `routePatterns` and/or `resourceTypes`.
 
 ## Failure behavior
 

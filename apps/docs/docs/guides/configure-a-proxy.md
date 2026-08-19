@@ -6,7 +6,26 @@ description: Add a proxy server and route a scrape or crawl through it.
 
 # Configure a Proxy
 
-`packages/proxy` is a Tentacrawl module that manages manually defined proxy servers with endpoint rotation and usage tracking. It ships as the reference [Challenger extension](/extending/overview), so it doubles as a working example of the extension contract.
+`@tentacrawl/proxy` is Tentacrawl's official module for manually defined proxy servers with endpoint rotation and usage tracking. It ships as the reference [Challenger extension](/extending/overview), so it doubles as a working example of the extension contract.
+
+## Install it
+
+`proxy` is not bundled with the platform. Install it, then enable it:
+
+```bash
+pnpm add -w @tentacrawl/proxy
+```
+
+```ts
+// modules.config.ts
+{ id: 'proxy', package: '@tentacrawl/proxy' },
+```
+
+```bash
+pnpm generate
+```
+
+See [Module Registry](/extending/module-registry) for where `@tentacrawl/proxy` and other official modules are maintained.
 
 ## Add a server
 
@@ -16,7 +35,7 @@ In the admin UI, go to **Extensions → Proxy Servers → New**. A server has:
 - one or more endpoint URLs
 - a rotation strategy: `round-robin` or `random`
 
-Use **Test** on an endpoint before saving — it proxies a real request through the candidate server to `ipinfo.io` and returns IP, city, region, country, org, and latency, so a dead or misconfigured endpoint fails here instead of on your first real run.
+Use **Test** on an endpoint before saving — it proxies a real request through the candidate server to `ipinfo.io` and returns IP, city, region, country, org, and latency.
 
 ## Route a run through it
 

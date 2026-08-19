@@ -33,6 +33,8 @@ For app-local or package-local changes, prefer targeted commands first.
 - Validate runtime-facing inputs with shared Zod schemas where appropriate.
 - Prefer extending existing modules and shared packages over introducing parallel patterns.
 - Update the relevant page under `apps/docs/docs/` when a change affects a documented environment variable, the Challenger contract, a DSL action, or a REST endpoint (see AGENTS.md section 14).
+- Core modules that extend the platform itself are welcome under `packages/` — that is what this repository is for.
+- Challenger extensions are not. Anything that adapts a run to a particular site or vendor (proxy providers, captcha solvers, fingerprint rotators, login flows) ships as an external package installed on demand, so a deployment carries only the integrations it actually uses and vendor code stays out of the core. See [Extending Tentacrawl](https://docs.tentacrawl.com/extending/overview).
 
 ## Continuous Integration
 

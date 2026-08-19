@@ -53,7 +53,7 @@ Tentacrawl scrapes and crawls **JavaScript-rendered websites** with real browser
 
 ## The core idea
 
-Site-specific adaptation — proxy rotation, captcha handling, fingerprinting, login, user-behavior mimicry — cannot live in the core scraping engine, because every site needs something different. Tentacrawl solves this with the **Challenger framework**: a single, contract-based extension surface that lets a module observe and mutate every stage of a run (navigation, requests and responses, session state, artifacts, DSL steps) without editing core code. `packages/proxy` is the reference implementation; everything else you might want to build — a captcha solver, a fingerprint rotator, a login flow — follows the same contract.
+Site-specific adaptation — proxy rotation, captcha handling, fingerprinting, login, user-behavior mimicry — lives outside the core scraping engine. The **Challenger framework** is a contract-based extension surface: a module can observe and mutate every stage of a run (navigation, requests and responses, session state, artifacts, DSL steps) without editing core code. `@tentacrawl/proxy` is the reference implementation, an official module you install; a captcha solver, a fingerprint rotator, or a login flow follows the same contract.
 
 ## Where to go next
 

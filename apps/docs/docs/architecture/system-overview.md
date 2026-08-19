@@ -32,7 +32,8 @@ The API creates jobs and serves configuration and admin endpoints; the worker is
 packages/core        <- everyone imports this (types, schemas, the extension registry)
       ^         ^
 packages/browser -- port --> packages/challenger (host) --> browser + core
-(never imports the host)      packages/proxy / your extension --> core
+(never imports the host)      @tentacrawl/proxy / your extension --> core
+                               (external module — see Module System)
 ```
 
 `packages/browser` defines the `ChallengerDispatcher` interface it calls at each lifecycle point, but never imports the module that implements it. `packages/challenger` provides the real implementation and is wired in by the worker; a `NoopChallengerDispatcher` stands in for the sandbox and unit tests. This is what lets the browser package stay dependency-free — no NestJS, no database — while still being fully extensible. See [The Challenger Framework](/architecture/challenger-framework) for the run lifecycle this enables.

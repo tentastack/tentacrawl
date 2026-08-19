@@ -44,7 +44,7 @@ Each step's `outputKey` becomes a field in the run's JSON artefact.
 
 `goto`, `click`, `fill`, `waitFor`, `extractText`, `extractHtml`, `extractAttr`, `extract`, `screenshot`, `wait`, `saveSource`, `assert`. The full field-level grammar (which fields each action requires) is in the [DSL Grammar reference](/reference/dsl-grammar).
 
-These names are fixed and use-case agnostic — the DSL itself never grows site-specific verbs. If you need a step type this list doesn't cover (submit a captcha solution, replay a login), a [Challenger extension](/extending/add-a-dsl-action) can register a new action name, and it becomes usable in YAML exactly like a base action.
+If you need a step type this list doesn't cover (submit a captcha solution, replay a login), a [Challenger extension](/extending/add-a-dsl-action) can register a new action name, and it becomes usable in YAML exactly like a base action.
 
 ## Try it locally
 

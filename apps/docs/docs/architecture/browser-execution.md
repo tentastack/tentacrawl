@@ -8,9 +8,9 @@ description: How Tentacrawl balances memory cost against fingerprint isolation a
 
 `packages/browser` keeps a process-level pool of Chromium browsers, keyed by **launch profile** — the sorted launch args, `headless`, `channel`, `executablePath`, and any launch-level proxy server, hashed together. `getOrCreateBrowser(launchOptions)` returns the pooled browser for that exact profile, launching a new one only when no match exists.
 
-This reconciles two goals that pull in opposite directions:
+The pool balances two things:
 
-- **Memory conservation, by default.** Most runs share one browser process and each gets a fresh, isolated `BrowserContext` — separate cookies, storage, cache, proxy, user agent, viewport, locale, and timezone. That is enough isolation for the common case cheaply.
+- **Memory conservation, by default.** Most runs share one browser process and each gets a fresh, isolated `BrowserContext` — separate cookies, storage, cache, proxy, user agent, viewport, locale, and timezone.
 - **Process-level fingerprint isolation, on demand.** Some signals are fixed for an entire Chromium process — launch flags, the TLS/JA3 stack, GPU/WebGL, HTTP/2 framing — and cannot differ between two contexts of the *same* browser. A [Challenger extension](/extending/overview) that needs traffic to look like a genuinely different machine sets distinct `launchArgs` (and optionally a launch-level proxy) via `ctx.helpers.patchContextOptions(...)` during `bootstrap-context`; the pool then hands that run its own browser process. Identical profiles keep sharing one process; distinct ones don't.
 
 `launchArgs` from an extension are always merged on top of the hardening defaults, never replace them.

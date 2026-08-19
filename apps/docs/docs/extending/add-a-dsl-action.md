@@ -40,7 +40,7 @@ The action's `schema` is unioned into the compiled step schema, so the DSL compi
 
 - `capabilities` must include `dsl-action`, or the registration is dropped.
 - The action name must not collide with a base DSL action name or another extension's — the registry rejects both at registration time, not silently.
-- `execute` receives a `ChallengerStepContext`, the same handler context shape as `beforeStep`/`afterStep`, so `ctx.state`, `ctx.helpers`, and `asPage(ctx)` all work the same way here.
+- `execute` receives a `ChallengerStepContext`, the same handler context shape as `beforeStep`/`afterStep`, so `ctx.state`, `ctx.helpers`, and `ctx.raw.page` all work the same way here.
 
 ## Next steps
 

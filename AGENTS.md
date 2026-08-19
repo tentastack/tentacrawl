@@ -46,14 +46,30 @@ repository. These rules take precedence over default behavior.
 
 ### Enabled modules
 
-Enabled in `modules.config.ts`:
+Enabled by default in `modules.config.ts`, all in-workspace under `packages/`:
 
 - `admin`: dashboard, worker presence, operational activity tracking
 - `challenger`: extension framework host (dispatch, signals, and the extensions admin dashboard)
 - `crawler`: multi-page crawling module
 - `notification`: lifecycle notifications
-- `proxy`: manually defined proxy servers with endpoint rotation and usage tracking; the reference challenger extension
 - `scraper`: single-page scraping module
+
+### Where a new module belongs
+
+- **Core modules extend the platform and belong here**, under `packages/`, added
+  to `modules.config.ts` like the ones above.
+- **Challenger extensions do not.** Anything that adapts a run to a specific
+  site or vendor (proxy providers, captcha solvers, fingerprint rotators, login
+  flows) ships as an external package that a deployment installs on demand.
+  This keeps vendor-specific code and its dependencies out of the core, and
+  lets an extension version and release independently.
+
+Both use the same module contract and the same `modules.config.ts` mechanism;
+the only difference is where the package lives. `@tentacrawl/proxy`, in the
+sibling [`tentacrawl-modules`](https://github.com/tentastack/tentacrawl-modules)
+repository, is the reference implementation of an external Challenger
+extension module. See [Module Conventions](#11-module-conventions) and
+`apps/docs/docs/architecture/module-system.md`.
 
 ### Generated registries
 
@@ -182,12 +198,19 @@ Default to no comment. A comment is a cost: it drifts from the code and adds noi
 
 ## 11. Module Conventions
 
-Feature modules such as `admin`, `challenger`, `crawler`, `notification`, `proxy`, and `scraper` follow a deterministic structure. Foundational packages such as `browser`, `cli`, `core`, `dsl`, and `ui` are exempt.
+Feature modules — `admin`, `challenger`, `crawler`, `notification`, and
+`scraper` in this workspace under `packages/`, plus every external module such
+as `proxy` (in `tentastack/tentacrawl-modules` or a third party's own
+repository) — follow a deterministic structure. This is one contract shared
+by in-workspace and external modules alike; `pnpm generate` resolves a
+module's package the same way regardless of where it physically lives (see
+`packages/cli/src/generate.ts`). Foundational packages such as `browser`,
+`cli`, `core`, `dsl`, and `ui` are exempt.
 
 ### Expected layout
 
 ```text
-packages/<module>/src/
+<module>/src/
   index.ts
   <module>.module.ts
   event.ts
@@ -221,6 +244,27 @@ packages/<module>/src/
 - If a package needs subpath imports such as `@tentacrawl/<module>/data/schemas`, provide thin root proxy files that re-export from `src/`. Register the subpath in both `exports` and `typesVersions`; the workspace uses `moduleResolution: node`, which ignores `exports`.
 - External consumers must import through public package exports, never another package's `src/` tree.
 - Internal imports inside a package should continue to use relative imports.
+
+### Packaging an external module
+
+- Ship **both** `dist/` (compiled, for `require()` at runtime) **and** `src/`
+  (raw TypeScript, for `pnpm generate`'s static metadata parsing and for
+  Next.js's `transpilePackages` to pick up the frontend surface). Declare both
+  in `files`.
+- Host-provided packages are `peerDependencies`, never `dependencies`:
+  `@tentacrawl/core`, `@tentacrawl/ui`, `@nestjs/*`, `@mikro-orm/*`, `react`,
+  `next`. This is a correctness requirement, not a preference — a module that
+  bundles its own `@tentacrawl/core` gets a second `ChallengerRegistry` class
+  identity, and Nest DI then fails to inject the host's registry.
+- Never use `workspace:*` for a host package; that protocol only resolves
+  inside this workspace. While `@tentacrawl/core` and `@tentacrawl/ui` are
+  unpublished and carry no `version` field, the honest peer range is `*`.
+- Peer ranges for third-party packages must match what `apps/web` and the apps
+  actually install, or pnpm reports an unmet peer.
+- `.pnpmfile.cjs` copies an external module's root dependency spec into
+  `apps/api`, `apps/worker`, and `apps/web`, so its peers resolve from each
+  app's own context. A module with a frontend depends on that copy under
+  `apps/web` to resolve `react` and `@tentacrawl/ui`.
 
 ## 12. Frontend Conventions
 
@@ -291,6 +335,7 @@ packages/<module>/src/
 - Keep markdown concise and ASCII-only.
 - `apps/docs` (Docusaurus, deployed separately from this repo) is user- and extension-author-facing documentation, distinct from this file and `README.md`. Update the relevant page under `apps/docs/docs/` whenever a change affects a documented environment variable, the `ChallengerExtension`/`ChallengerRegistrar` contract, a DSL action, or a REST endpoint.
 - Cross-references from `apps/docs` into this file (e.g. a section number) are not build-checked — grep `apps/docs/docs/` for stale references whenever a section here is renumbered.
+- `apps/docs/docs/extending/module-registry.md` lists the official and verified external modules. Update it when a module is added, promoted, or drops out of a trust tier; the packaging rules it links to live in section 11 here.
 
 ## 15. Security and Compliance
 

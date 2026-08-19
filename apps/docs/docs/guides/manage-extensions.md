@@ -14,7 +14,7 @@ Shows every registered extension as `moduleId/extensionId` (for example `proxy/m
 
 ## Detail view
 
-Per-extension: capabilities, last error, and a recent-signals panel — the diagnostic trail for that extension's runs (see [Signals and Diagnostics](/architecture/signals-and-diagnostics)). There is deliberately no generic configuration editor here: each extension that needs configuration ships its own settings UI, because only the extension author knows its shape and constraints. The proxy module's rotation and failure-counting settings are the reference example.
+Per-extension: capabilities, last error, and a recent-signals panel — the diagnostic trail for that extension's runs (see [Signals and Diagnostics](/architecture/signals-and-diagnostics)). Each extension that needs configuration ships its own settings UI; there is no generic configuration editor. The proxy module's rotation and failure-counting settings are the reference example.
 
 ## Status lifecycle
 

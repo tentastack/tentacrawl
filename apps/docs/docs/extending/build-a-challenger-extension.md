@@ -23,6 +23,10 @@ captcha/src/
     captcha.worker-module.ts
 ```
 
+Build this in its own repository — a community extension almost always should, and it's how the official modules ship too, see [`tentastack/tentacrawl-modules`](https://github.com/tentastack/tentacrawl-modules). It follows the same contract as a module living inside the main repository; there is no separate "external module" API to learn.
+
+Once it works, [Publishing an External Extension](/extending/publishing-an-external-extension) covers packaging and installing it.
+
 ## 2. Config schema
 
 ```ts
@@ -38,6 +42,8 @@ Never return a stored secret from your API. Expose a boolean presence flag (`has
 ## 3. The extension
 
 ```ts
+import type { Page } from 'playwright';
+
 @Injectable()
 export class CaptchaChallengerExtension implements ChallengerExtension, OnModuleInit {
   readonly moduleId = 'captcha';
@@ -66,7 +72,7 @@ export class CaptchaChallengerExtension implements ChallengerExtension, OnModule
   }
 
   private async handle(ctx: ChallengerRuntimeContext): Promise<boolean> {
-    const page = asPage(ctx);
+    const page = ctx.raw.page as Page | undefined;
     if (!page) return false;
 
     const cfg = captchaExtensionConfigSchema.parse(ctx.config ?? {});
@@ -105,7 +111,11 @@ export class CaptchaWorkerModule {}
 
 ## 5. Enable it
 
-Add the module to `modules.config.ts` and regenerate:
+Install it, add it to `modules.config.ts`, and regenerate:
+
+```bash
+pnpm add -w @tentacrawl/captcha
+```
 
 ```ts
 { id: 'captcha', package: '@tentacrawl/captcha' },
