@@ -21,6 +21,13 @@
       "runtimeArgs": ["--filter", "@tentacrawl/docs", "run", "dev"],
       "port": 3003,
       "autoPort": false
+    },
+    {
+      "name": "worker",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev:worker"],
+      "port": 3002,
+      "autoPort": false
     }
   ]
 }
