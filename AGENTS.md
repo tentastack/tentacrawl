@@ -12,6 +12,9 @@ repository. These rules take precedence over default behavior.
   parallel patterns that solve the same problem differently.
 - Treat generated files as derived output, not hand-edited source.
 - Never mix formatting changes with behavior changes.
+- Write for the next reader, not for the reviewer of the current change. Code
+  and docs state what is; the reasoning behind a decision belongs in the pull
+  request.
 - For non-trivial work, write a short plan before editing code.
 - Before adding a file or a pattern, check whether an existing module or package
   already provides the needed shape.
@@ -159,6 +162,7 @@ Default to no comment. A comment is a cost: it drifts from the code and adds noi
 - Do not add JSDoc blocks, section banners, or trailing explanations of a change.
 - Do not restate what the code already says. If a comment paraphrases the next line, the identifiers, the types, or the diff, delete it.
 - When editing, leave existing comments alone unless the change makes them wrong.
+- Never write a comment to defend a choice. If it argues the design is right, or names a rejected alternative, delete it.
 - Before finishing, re-read every comment added and delete each one that does not meet the bar above.
 
 ## 6. Type Safety and Validation
@@ -333,6 +337,7 @@ module's package the same way regardless of where it physically lives (see
 - Keep `README.md` and this file aligned with the real repository structure.
 - Document behavior changes when they affect setup, module generation, or runtime flow.
 - Keep markdown concise and ASCII-only.
+- Documentation states behavior. Delete sentences that justify a design decision or sell its benefits.
 - `apps/docs` (Docusaurus, deployed separately from this repo) is user- and extension-author-facing documentation, distinct from this file and `README.md`. Update the relevant page under `apps/docs/docs/` whenever a change affects a documented environment variable, the `ChallengerExtension`/`ChallengerRegistrar` contract, a DSL action, or a REST endpoint.
 - Cross-references from `apps/docs` into this file (e.g. a section number) are not build-checked — grep `apps/docs/docs/` for stale references whenever a section here is renumbered.
 - `apps/docs/docs/extending/module-registry.md` lists the official and verified external modules. Update it when a module is added, promoted, or drops out of a trust tier; the packaging rules it links to live in section 11 here.
