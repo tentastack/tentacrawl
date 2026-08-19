@@ -33,8 +33,6 @@ export type {
   RunSessionLogger,
 } from './worker/challenger-run-session';
 
-export { asPage, asContext, asBrowser, asRequest, asResponse } from './raw-helpers';
-
 export {
   challengerListItemSchema,
   challengerSignalItemSchema,
