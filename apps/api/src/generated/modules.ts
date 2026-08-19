@@ -7,7 +7,6 @@ import { ChallengerModule } from '@tentacrawl/challenger';
 import { NotificationModule } from '@tentacrawl/notification';
 import { CrawlerModule } from '@tentacrawl/crawler';
 import { ScraperModule } from '@tentacrawl/scraper';
-import { ProxyModule } from '@tentacrawl/proxy';
 
 export const apiModules: DynamicModule[] = [
   AdminModule.forApi(),
@@ -15,5 +14,4 @@ export const apiModules: DynamicModule[] = [
   NotificationModule.forApi(),
   CrawlerModule.forApi(),
   ScraperModule.forApi(),
-  ProxyModule.forApi(),
 ];

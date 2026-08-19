@@ -8,5 +8,4 @@ export const moduleTranspilePackages: string[] = [
   '@tentacrawl/notification',
   '@tentacrawl/crawler',
   '@tentacrawl/scraper',
-  '@tentacrawl/proxy',
 ];

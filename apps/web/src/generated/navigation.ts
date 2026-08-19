@@ -15,9 +15,6 @@ export const navigationItems: SidebarNavItem[] = [
     path: '/extensions',
     icon: Puzzle,
     order: 90,
-    children: [
-      { label: 'Proxy Servers', href: '/proxy' },
-    ],
   },
   {
     label: 'Website Crawler',

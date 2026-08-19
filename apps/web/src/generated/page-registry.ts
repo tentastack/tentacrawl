@@ -18,7 +18,4 @@ export const pageRegistry: PageRegistryEntry[] = [
   { path: 'scrape', Component: lazy(() => import('@tentacrawl/scraper/frontend').then((m) => ({ default: m.ScrapeListPage }))) },
   { path: 'scrape/new', Component: lazy(() => import('@tentacrawl/scraper/frontend').then((m) => ({ default: m.ScrapeCreatePage }))) },
   { path: 'scrape/:id', Component: lazy(() => import('@tentacrawl/scraper/frontend').then((m) => ({ default: m.ScrapeDetailPage }))) },
-  { path: 'proxy', Component: lazy(() => import('@tentacrawl/proxy/frontend').then((m) => ({ default: m.ProxyServerListPage }))) },
-  { path: 'proxy/new', Component: lazy(() => import('@tentacrawl/proxy/frontend').then((m) => ({ default: m.ProxyServerCreatePage }))) },
-  { path: 'proxy/:id', Component: lazy(() => import('@tentacrawl/proxy/frontend').then((m) => ({ default: m.ProxyServerDetailPage }))) },
 ];

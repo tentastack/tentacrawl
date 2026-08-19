@@ -14,7 +14,6 @@
     "@tentacrawl/crawler": "workspace:*",
     "@tentacrawl/core": "workspace:*",
     "@tentacrawl/notification": "workspace:*",
-    "@tentacrawl/proxy": "workspace:*",
     "@tentacrawl/ui": "workspace:*",
     "@tentacrawl/scraper": "workspace:*",
     "@tanstack/react-query": "^5.62.0",

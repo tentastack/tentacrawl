@@ -16,7 +16,4 @@ export const moduleRoutes: RouteEntry[] = [
   { path: 'scrape', module: 'scraper', title: 'Scrapes' },
   { path: 'scrape/new', module: 'scraper', title: 'New Scrape' },
   { path: 'scrape/:id', module: 'scraper', title: 'Scrape Detail' },
-  { path: 'proxy', module: 'proxy', title: 'Proxy Servers' },
-  { path: 'proxy/new', module: 'proxy', title: 'New Proxy Server' },
-  { path: 'proxy/:id', module: 'proxy', title: 'Proxy Server Detail' },
 ];
