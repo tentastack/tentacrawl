@@ -8,6 +8,7 @@ import { NotificationModule } from '@tentacrawl/notification';
 import { CrawlerModule } from '@tentacrawl/crawler';
 import { ScraperModule } from '@tentacrawl/scraper';
 import { ProxyModule } from '@tentacrawl/proxy';
+import { CaptchaaiModule } from '@tentacrawl/captchaai';
 
 export const workerModules: DynamicModule[] = [
   AdminModule.forWorker(),
@@ -16,4 +17,5 @@ export const workerModules: DynamicModule[] = [
   CrawlerModule.forWorker(),
   ScraperModule.forWorker(),
   ProxyModule.forWorker(),
+  CaptchaaiModule.forWorker(),
 ];

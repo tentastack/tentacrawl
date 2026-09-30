@@ -49,6 +49,7 @@ repository. These rules take precedence over default behavior.
 Enabled in `modules.config.ts`:
 
 - `admin`: dashboard, worker presence, operational activity tracking
+- `captchaai`: CaptchaAI challenger extension for captcha detection and solving
 - `challenger`: extension framework host (dispatch, signals, and the extensions admin dashboard)
 - `crawler`: multi-page crawling module
 - `notification`: lifecycle notifications

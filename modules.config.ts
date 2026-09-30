@@ -16,4 +16,5 @@ export const enabledModules: ModuleEntry[] = [
 
   // Optional
   { id: 'proxy', package: '@tentacrawl/proxy' },
+  { id: 'captchaai', package: '@tentacrawl/captchaai' },
 ];
